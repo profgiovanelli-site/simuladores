@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="pt-PT" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulador de Raios de Luz ProfGiovanelli</title>
+  <!-- Tailwind CSS para estilização moderna -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons para ícones vetorizados consistentes -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    /* Estilos personalizados para inputs do tipo range para ficarem consistentes com o tema dark */
+    input[type="range"]::-webkit-slider-thumb {
+      background: #6366f1;
+      border: 2px solid #ffffff;
+      border-radius: 9999px;
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      -webkit-appearance: none;
+    }
+    input[type="range"]::-moz-range-thumb {
+      background: #6366f1;
+      border: 2px solid #ffffff;
+      border-radius: 9999px;
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-900 text-slate-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white overflow-x-hidden">
+
+  <!-- CABEÇALHO -->
+  <header class="border-b border-slate-800 bg-slate-950 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <div class="bg-gradient-to-tr from-amber-500 to-indigo-600 p-2.5 rounded-xl text-white shadow-lg shadow-indigo-500/20">
+        <i data-lucide="sparkles" class="w-6 h-6 animate-pulse"></i>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+          Simulador de Raios de Luz ProfGiovanelli
+        </h1>
+        <p class="text-xs text-slate-400">Arraste a seta verde e observe o percurso animado da luz</p>
+      </div>
+    </div>
+    
+    <!-- Alternador de Modo/Abas -->
+    <div class="flex bg-slate-900 p-1 rounded-lg border border-slate-800">
+      <button id="tab-simulation" onclick="switchTab('simulation')" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all bg-indigo-600 text-white shadow-sm">
+        Visualizador Ativo
+      </button>
+      <button id="tab-theory" onclick="switchTab('theory')" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all text-slate-400 hover:text-white">
+        Guia Didático
+      </button>
+    </div>
+  </header>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <main class="flex-1 grid grid-cols-1 xl:grid-cols-12 overflow-hidden">
+    
+    <!-- PAINEL DE CONTROLO ESQUERDO (4 Colunas) -->
+    <section class="xl:col-span-4 border-r border-slate-800 bg-slate-950 p-6 flex flex-col gap-5 overflow-y-auto max-h-[calc(100vh-80px)]">
+      
+      <!-- 1. Tipo de Espelho -->
+      <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800/80">
+        <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+          <i data-lucide="settings" class="w-4 h-4 text-indigo-400"></i>
+          1. Seleção do Espelho
+        </h2>
+        <div class="grid grid-cols-2 gap-2">
+          <button id="btn-concave" onclick="setMirrorType('concave')" class="py-2 px-3 rounded-lg font-bold text-xs border transition-all bg-indigo-600/10 border-indigo-500 text-indigo-300 shadow-inner">
+            Côncavo (Foco Real)
+          </button>
+          <button id="btn-convex" onclick="setMirrorType('convex')" class="py-2 px-3 rounded-lg font-bold text-xs border transition-all bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300">
+            Convexo (Foco Virtual)
+          </button>
+        </div>
+      </div>
+
+      <!-- 2. Controle do Lançamento de Luz -->
+      <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800/80 space-y-4">
+        <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+          <i data-lucide="play" class="w-4 h-4 text-emerald-400"></i>
+          2. Controle de Propagação
+        </h2>
+        
+        <div class="flex items-center gap-3">
+          <button id="btn-play-pause" onclick="togglePlay()" class="flex-1 py-2 px-4 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition-all bg-amber-600/15 border border-amber-500/30 text-amber-300 hover:bg-amber-600/20">
+            <i data-lucide="pause" class="w-4 h-4 fill-amber-300" id="icon-play-pause"></i> 
+            <span id="text-play-pause">Pausar Feixe</span>
+          </button>
+          
+          <button onclick="resetProgress()" class="py-2 px-3 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-white rounded-lg text-xs font-semibold">
+            Reiniciar
+          </button>
+        </div>
+
+        <!-- Velocidade de animação -->
+        <div class="space-y-1.5 pt-2 border-t border-slate-800">
+          <div class="flex justify-between items-center text-[11px] text-slate-400">
+            <span>Velocidade de Deslocamento</span>
+            <span id="badge-speed" class="text-indigo-400 font-mono font-bold bg-indigo-500/10 px-1.5 py-0.5 rounded">Moderada</span>
+          </div>
+          <div class="grid grid-cols-3 gap-1.5">
+            <button id="btn-speed-slow" onclick="setAnimationSpeed(3.0)" class="py-1 rounded text-[10px] font-bold border transition-all bg-slate-950 border-slate-800 text-slate-500 hover:text-slate-300">Lenta</button>
+            <button id="btn-speed-medium" onclick="setAnimationSpeed(1.5)" class="py-1 rounded text-[10px] font-bold border transition-all bg-indigo-500/20 border-indigo-500 text-indigo-300">Média</button>
+            <button id="btn-speed-fast" onclick="setAnimationSpeed(0.6)" class="py-1 rounded text-[10px] font-bold border transition-all bg-slate-950 border-slate-800 text-slate-500 hover:text-slate-300">Rápida</button>
+          </div>
+        </div>
+
+        <!-- Barra de progresso -->
+        <div class="space-y-1">
+          <div class="flex justify-between text-[10px] text-slate-500">
+            <span>Estado do feixe:</span>
+            <span id="label-beam-status">Incidindo...</span>
+          </div>
+          <div class="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+            <div id="progress-bar" class="h-full bg-amber-500 transition-all duration-75" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Ajuste Físico do Objeto -->
+      <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800/80 flex flex-col gap-4">
+        <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+          <i data-lucide="sliders" class="w-4 h-4 text-indigo-400"></i>
+          3. Dimensões do Objeto
+        </h2>
+
+        <!-- Distância do Objeto -->
+        <div class="space-y-1">
+          <div class="flex justify-between text-xs">
+            <span class="text-slate-400 font-medium">Distância do Objeto (p)</span>
+            <span id="badge-p" class="text-indigo-400 font-mono font-bold bg-indigo-500/10 px-1.5 py-0.5 rounded">250 cm</span>
+          </div>
+          <input id="input-p" type="range" min="35" max="440" value="250" oninput="updateParam('objectP', this.value)" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+        </div>
+
+        <!-- Altura do Objeto -->
+        <div class="space-y-1">
+          <div class="flex justify-between text-xs">
+            <span class="text-slate-400 font-medium">Altura do Objeto (y)</span>
+            <span id="badge-height" class="text-indigo-400 font-mono font-bold bg-indigo-500/10 px-1.5 py-0.5 rounded">80 cm</span>
+          </div>
+          <input id="input-height" type="range" min="20" max="140" value="80" oninput="updateParam('objectHeight', this.value)" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+        </div>
+
+        <!-- Distância Focal -->
+        <div class="space-y-1">
+          <div class="flex justify-between text-xs">
+            <span class="text-slate-400 font-medium">Foco do Espelho (f)</span>
+            <span id="badge-f" class="text-indigo-400 font-mono font-bold bg-indigo-500/10 px-1.5 py-0.5 rounded">150 cm</span>
+          </div>
+          <input id="input-f" type="range" min="90" max="210" value="150" oninput="updateParam('focalLength', this.value)" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+        </div>
+      </div>
+
+      <!-- 4. Ativação dos Raios -->
+      <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800/80">
+        <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+          <i data-lucide="layers" class="w-4 h-4 text-indigo-400"></i>
+          4. Ativar Feixes de Luz
+        </h2>
+        <div class="flex flex-col gap-2">
+          <label class="flex items-center gap-3 cursor-pointer p-1.5 rounded hover:bg-slate-800/50">
+            <input id="check-ray1" type="checkbox" checked onchange="toggleRay(1, this.checked)" class="w-3.5 h-3.5 rounded text-indigo-600 bg-slate-900 border-slate-700">
+            <span class="text-xs font-bold text-indigo-400">Raio 1: Paralelo ➔ Foco</span>
+          </label>
+
+          <label class="flex items-center gap-3 cursor-pointer p-1.5 rounded hover:bg-slate-800/50">
+            <input id="check-ray2" type="checkbox" checked onchange="toggleRay(2, this.checked)" class="w-3.5 h-3.5 rounded text-indigo-600 bg-slate-900 border-slate-700">
+            <span class="text-xs font-bold text-emerald-400">Raio 2: Foco ➔ Paralelo</span>
+          </label>
+
+          <label class="flex items-center gap-3 cursor-pointer p-1.5 rounded hover:bg-slate-800/50">
+            <input id="check-ray3" type="checkbox" onchange="toggleRay(3, this.checked)" class="w-3.5 h-3.5 rounded text-indigo-600 bg-slate-900 border-slate-700">
+            <span class="text-xs font-bold text-amber-400">Raio 3: Centro ➔ Centro</span>
+          </label>
+
+          <label class="flex items-center gap-3 cursor-pointer p-1.5 rounded hover:bg-slate-800/50">
+            <input id="check-ray4" type="checkbox" onchange="toggleRay(4, this.checked)" class="w-3.5 h-3.5 rounded text-indigo-600 bg-slate-900 border-slate-700">
+            <span class="text-xs font-bold text-pink-400">Raio 4: Vértice ➔ Simétrico</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Configurações Extras -->
+      <div class="flex gap-2">
+        <button onclick="toggleGrid()" class="flex-1 py-2 text-center bg-slate-900 border border-slate-800 rounded-lg text-xs font-semibold text-slate-400 hover:text-white">
+          Grelha: <span id="text-grid-status">LIGADA</span>
+        </button>
+        <button onclick="resetAll()" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-400 rounded-lg text-xs font-bold">
+          Reset Geral
+        </button>
+      </div>
+    </section>
+
+    <!-- PAINEL CENTRAL / DIREITO: ESPAÇO VISUAL (8 Colunas) -->
+    <section class="xl:col-span-8 bg-slate-900 flex flex-col overflow-y-auto max-h-[calc(100vh-80px)]">
+      
+      <!-- ABA DA SIMULAÇÃO -->
+      <div id="content-simulation" class="p-4 flex-1 flex flex-col justify-center min-h-[460px] relative select-none">
+        
+        <div class="absolute top-4 left-6 z-10 flex flex-col gap-1 pointer-events-none">
+          <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Simulação Óptica</span>
+          <span class="text-xs text-slate-400 flex items-center gap-1.5 bg-slate-950/90 backdrop-blur px-2 py-1.5 rounded-md border border-slate-800/50">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+            Arraste o objeto para reposicionar. Os feixes de luz viajam em tempo real!
+          </span>
+        </div>
+
+        <div class="bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden relative shadow-2xl">
+          <!-- Grelha de Fundo -->
+          <div id="svg-grid-overlay" class="absolute inset-0 pointer-events-none opacity-[0.03]" style="background-image: radial-gradient(circle, #fff 1px, transparent 1px); background-size: 20px 20px;"></div>
+
+          <svg id="canvas-svg" viewBox="0 0 1000 500" class="w-full h-auto cursor-crosshair touch-none">
+            <defs>
+              <marker id="arrow-green" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#10b981" />
+              </marker>
+              <marker id="arrow-red" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#ef4444" />
+              </marker>
+            </defs>
+
+            <!-- Eixo Principal -->
+            <line x1="50" y1="250" x2="950" y2="250" stroke="#334155" stroke-width="2.5" stroke-dasharray="6,6" />
+
+            <!-- Pontos de Referência Ópticos -->
+            <circle cx="500" cy="250" r="6" fill="#f8fafc" />
+            <text x="500" y="275" fill="#f8fafc" text-anchor="middle" class="text-xs font-bold font-mono">V (Vértice)</text>
+
+            <circle id="point-f" cx="350" cy="250" r="6" fill="#38bdf8" />
+            <text id="label-f" x="350" y="275" fill="#38bdf8" text-anchor="middle" class="text-xs font-bold font-mono">F (Foco)</text>
+
+            <circle id="point-c" cx="200" cy="250" r="6" fill="#a78bfa" />
+            <text id="label-c" x="200" y="275" fill="#a78bfa" text-anchor="middle" class="text-xs font-bold font-mono">C (Centro)</text>
+
+            <!-- Traseira não refletora do espelho (Rabiscos adicionais) -->
+            <g id="mirror-back-marks" stroke="#475569" stroke-width="2" stroke-linecap="round"></g>
+
+            <!-- Curvatura do Espelho -->
+            <path id="mirror-curve" d="" fill="none" stroke="#cbd5e1" stroke-width="6" stroke-linecap="round" />
+
+            <!-- Guias Estáticas Discretas -->
+            <g opacity="0.2" stroke-width="1" stroke-dasharray="3,3">
+              <line id="guide-r1-in" stroke="#818cf8" x1="0" y1="0" x2="0" y2="0" class="hidden" />
+              <line id="guide-r1-out" stroke="#818cf8" x1="0" y1="0" x2="0" y2="0" class="hidden" />
+              <line id="guide-r2-in" stroke="#34d399" x1="0" y1="0" x2="0" y2="0" class="hidden" />
+              <line id="guide-r2-out" stroke="#34d399" x1="0" y1="0" x2="0" y2="0" class="hidden" />
+              <line id="guide-r3-in" stroke="#fbbf24" x1="0" y1="0" x2="0" y2="0" class="hidden" />
+              <line id="guide-r3-out" stroke="#fbbf24" x1="0" y1="0" x2="0" y2="0" class="hidden" />
+              <line id="guide-r4-in" stroke="#f472b6" x1="0" y1="0" x2="0" y2="0" class="hidden" />
+              <line id="guide-r4-out" stroke="#f472b6" x1="0" y1="0" x2="0" y2="0" class="hidden" />
+            </g>
+
+            <!-- Linhas de Animação e Prolongamentos Reais/Virtuais -->
+            <g id="animated-paths">
+              <!-- Raio 1 -->
+              <g id="grp-ray1" class="hidden">
+                <line id="ray1-in" stroke="#818cf8" stroke-width="3" stroke-linecap="round" />
+                <line id="ray1-out" stroke="#818cf8" stroke-width="3" stroke-linecap="round" />
+                <line id="ray1-virtual" stroke="#818cf8" stroke-width="1.5" stroke-dasharray="4,4" class="opacity-80" />
+                <circle id="photon1" r="6" fill="#818cf8" />
+              </g>
+
+              <!-- Raio 2 -->
+              <g id="grp-ray2" class="hidden">
+                <line id="ray2-in" stroke="#34d399" stroke-width="3" stroke-linecap="round" />
+                <line id="ray2-out" stroke="#34d399" stroke-width="3" stroke-linecap="round" />
+                <line id="ray2-virtual" stroke="#34d399" stroke-width="1.5" stroke-dasharray="4,4" class="opacity-80" />
+                <circle id="photon2" r="6" fill="#34d399" />
+              </g>
+
+              <!-- Raio 3 -->
+              <g id="grp-ray3" class="hidden">
+                <line id="ray3-in" stroke="#fbbf24" stroke-width="3" stroke-linecap="round" />
+                <line id="ray3-out" stroke="#fbbf24" stroke-width="3" stroke-linecap="round" />
+                <line id="ray3-virtual" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="4,4" class="opacity-80" />
+                <circle id="photon3" r="6" fill="#fbbf24" />
+              </g>
+
+              <!-- Raio 4 -->
+              <g id="grp-ray4" class="hidden">
+                <line id="ray4-in" stroke="#f472b6" stroke-width="3" stroke-linecap="round" />
+                <line id="ray4-out" stroke="#f472b6" stroke-width="3" stroke-linecap="round" />
+                <line id="ray4-virtual" stroke="#f472b6" stroke-width="1.5" stroke-dasharray="4,4" class="opacity-80" />
+                <circle id="photon4" r="6" fill="#f472b6" />
+              </g>
+            </g>
+
+            <!-- Objeto (Seta Verde Interativa) -->
+            <g id="obj-group" class="cursor-ew-resize">
+              <circle id="obj-drag-area" r="22" fill="#10b981" class="opacity-0 hover:opacity-25 active:opacity-35 transition-opacity" />
+              <line id="obj-arrow" stroke="#10b981" stroke-width="5" marker-end="url(#arrow-green)" />
+              <circle id="obj-base" r="4" fill="#064e3b" />
+              <rect id="obj-label-rect" width="60" height="20" rx="4" fill="#10b981" />
+              <text id="obj-label-text" fill="#ffffff" text-anchor="middle" class="text-xs font-bold">Objeto</text>
+            </g>
+
+            <!-- Imagem (Seta Vermelha Dinâmica) -->
+            <g id="img-group">
+              <line id="img-arrow" stroke="#ef4444" stroke-width="5" marker-end="url(#arrow-red)" />
+              <circle id="img-base" r="4" fill="#7f1d1d" />
+              <rect id="img-label-rect" width="60" height="20" rx="4" fill="#ef4444" />
+              <text id="img-label-text" fill="#ffffff" text-anchor="middle" class="text-xs font-bold">Imagem</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Rodapé Explicativo (Simulation) -->
+      <div id="footer-simulation" class="p-6 border-t border-slate-800 bg-slate-950/60 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-slate-900/40 p-4 rounded-xl border border-slate-800 flex flex-col justify-between">
+          <div>
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+              Características da Imagem Obtida
+            </h3>
+            <div class="space-y-2.5">
+              <div class="flex justify-between border-b border-slate-800/60 pb-1.5 text-sm">
+                <span class="text-slate-400">Natureza:</span>
+                <span id="txt-nature" class="font-bold">Real</span>
+              </div>
+              <div class="flex justify-between border-b border-slate-800/60 pb-1.5 text-sm">
+                <span class="text-slate-400">Orientação:</span>
+                <span id="txt-orientation" class="font-bold">Invertida</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-slate-400">Escala:</span>
+                <span id="txt-size" class="font-bold text-white">Reduzida</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-900/40 p-4 rounded-xl border border-slate-800 flex flex-col justify-center">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400 mb-2 flex items-center gap-2">
+            <i data-lucide="info" class="w-4 h-4"></i>
+            Observação Didática
+          </h3>
+          <p id="txt-pedagogic-tip" class="text-xs text-slate-300 leading-relaxed">
+            No espelho <strong>Côncavo</strong>, note como a luz cruza-se fisicamente no espaço real para formar imagens reais.
+          </p>
+          <p id="txt-pedagogic-subtip" class="text-xs text-slate-400 mt-2">
+            No espelho <strong>Convexo</strong>, os raios refletidos abrem-se (divergem). A imagem é criada onde os prolongamentos tracejados no interior do espelho se encontram.
+          </p>
+        </div>
+      </div>
+
+      <!-- ABA DO GUIA DIDÁTICO (Escondido por padrão) -->
+      <div id="content-theory" class="p-8 max-w-4xl mx-auto space-y-8 hidden">
+        <div class="text-center max-w-2xl mx-auto space-y-2">
+          <h2 class="text-3xl font-extrabold text-white tracking-tight">Guia Didático do Prof. Giovanelli</h2>
+          <p class="text-slate-400 text-sm">
+            Fundamentos da óptica geométrica para espelhos curvos e utilização dos raios principais.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-3">
+            <h3 class="text-indigo-400 font-bold flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+              O Espelho Côncavo
+            </h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              A face refletora interna concentra os raios de luz incididos (comportamento <strong>convergente</strong>). O foco (F) e o centro (C) encontram-se na frente da superfície, sendo pontos reais.
+            </p>
+          </div>
+
+          <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-3">
+            <h3 class="text-emerald-400 font-bold flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+              O Espelho Convexo
+            </h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              A face refletora externa espalha os raios de luz incididos (comportamento <strong>divergente</strong>). O foco (F) e o centro (C) encontram-se por trás do espelho, sendo pontos virtuais.
+            </p>
+          </div>
+        </div>
+
+        <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-4">
+          <h3 class="text-lg font-bold text-white border-b border-slate-800 pb-2">Comportamento dos Raios Notáveis</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+            <div>
+              <h4 class="font-bold text-indigo-400 mb-1">1. Paralelo ao eixo principal</h4>
+              <p class="text-slate-400">Incide de forma paralela ao eixo e reflete alinhado ao Foco (F).</p>
+            </div>
+            <div>
+              <h4 class="font-bold text-emerald-400 mb-1">2. Na direção do Foco</h4>
+              <p class="text-slate-400">Incide direcionado ao Foco (F) e reflete paralelamente ao eixo principal.</p>
+            </div>
+            <div>
+              <h4 class="font-bold text-amber-400 mb-1">3. Pelo Centro de Curvatura</h4>
+              <p class="text-slate-400">Incide direcionado ao centro (C) e reflete voltando exatamente pelo seu caminho de entrada.</p>
+            </div>
+            <div>
+              <h4 class="font-bold text-pink-400 mb-1">4. Pelo Vértice</h4>
+              <p class="text-slate-400">Incide no Vértice (V) e reflete simetricamente em relação ao eixo principal.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <script>
+    // ESTADO GLOBAL DA APLICAÇÃO
+    const state = {
+      mirrorType: 'concave',
+      focalLength: 150,
+      objectP: 250,
+      objectHeight: 80,
+      showRay1: true,
+      showRay2: true,
+      showRay3: false,
+      showRay4: false,
+      isPlaying: true,
+      animationSpeed: 1.5,
+      progress: 0,
+      showGrid: true,
+      activeTab: 'simulation',
+      isDragging: false
+    };
+
+    // Vértice do espelho no canvas SVG
+    const Vx = 500;
+    const Vy = 250;
+
+    // Elementos do DOM
+    const canvasSvg = document.getElementById('canvas-svg');
+    const inputP = document.getElementById('input-p');
+    const inputHeight = document.getElementById('input-height');
+    const inputF = document.getElementById('input-f');
+
+    // Inicialização ao carregar o DOM
+    window.addEventListener('DOMContentLoaded', () => {
+      // Iniciar a biblioteca de ícones
+      lucide.createIcons();
+      
+      // Ligar escutas de ponteiro (Pointer Events para computadores e ecrãs táteis)
+      setupDragging();
+      
+      // Iniciar loop de animação
+      startAnimationLoop();
+      
+      // Primeira renderização
+      render();
+    });
+
+    // SISTEMA DE ABAS (VISUALIZADOR VS TEORIA)
+    function switchTab(tabId) {
+      state.activeTab = tabId;
+      const simTabBtn = document.getElementById('tab-simulation');
+      const theoryTabBtn = document.getElementById('tab-theory');
+      const simContent = document.getElementById('content-simulation');
+      const footerSim = document.getElementById('footer-simulation');
+      const theoryContent = document.getElementById('content-theory');
+
+      if (tabId === 'simulation') {
+        simTabBtn.className = "px-4 py-1.5 rounded-md text-sm font-medium transition-all bg-indigo-600 text-white shadow-sm";
+        theoryTabBtn.className = "px-4 py-1.5 rounded-md text-sm font-medium transition-all text-slate-400 hover:text-white";
+        simContent.classList.remove('hidden');
+        footerSim.classList.remove('hidden');
+        theoryContent.classList.add('hidden');
+      } else {
+        theoryTabBtn.className = "px-4 py-1.5 rounded-md text-sm font-medium transition-all bg-indigo-600 text-white shadow-sm";
+        simTabBtn.className = "px-4 py-1.5 rounded-md text-sm font-medium transition-all text-slate-400 hover:text-white";
+        simContent.classList.add('hidden');
+        footerSim.classList.add('hidden');
+        theoryContent.classList.remove('hidden');
+      }
+    }
+
+    // ALTERNAR SELEÇÃO DE ESPELHO
+    function setMirrorType(type) {
+      state.mirrorType = type;
+      const btnConcave = document.getElementById('btn-concave');
+      const btnConvex = document.getElementById('btn-convex');
+
+      if (type === 'concave') {
+        btnConcave.className = "py-2 px-3 rounded-lg font-bold text-xs border transition-all bg-indigo-600/10 border-indigo-500 text-indigo-300 shadow-inner";
+        btnConvex.className = "py-2 px-3 rounded-lg font-bold text-xs border transition-all bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300";
+      } else {
+        btnConvex.className = "py-2 px-3 rounded-lg font-bold text-xs border transition-all bg-indigo-600/10 border-indigo-500 text-indigo-300 shadow-inner";
+        btnConcave.className = "py-2 px-3 rounded-lg font-bold text-xs border transition-all bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300";
+      }
+      render();
+    }
+
+    // ATIVAR / DESATIVAR GRELHA
+    function toggleGrid() {
+      state.showGrid = !state.showGrid;
+      const gridOverlay = document.getElementById('svg-grid-overlay');
+      const gridStatusText = document.getElementById('text-grid-status');
+      
+      if (state.showGrid) {
+        gridOverlay.classList.remove('hidden');
+        gridStatusText.textContent = "LIGADA";
+      } else {
+        gridOverlay.classList.add('hidden');
+        gridStatusText.textContent = "DESLIGADA";
+      }
+    }
+
+    // TOGGLE PLAY/PAUSE DA LUZ
+    function togglePlay() {
+      state.isPlaying = !state.isPlaying;
+      const btnPlayPause = document.getElementById('btn-play-pause');
+      const labelText = document.getElementById('text-play-pause');
+      const icon = document.getElementById('icon-play-pause');
+
+      if (state.isPlaying) {
+        labelText.textContent = "Pausar Feixe";
+        icon.setAttribute('data-lucide', 'pause');
+        btnPlayPause.className = "flex-1 py-2 px-4 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition-all bg-amber-600/15 border border-amber-500/30 text-amber-300 hover:bg-amber-600/20";
+      } else {
+        labelText.textContent = "Disparar Luz";
+        icon.setAttribute('data-lucide', 'play');
+        btnPlayPause.className = "flex-1 py-2 px-4 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition-all bg-emerald-600 text-white hover:bg-emerald-500";
+      }
+      lucide.createIcons();
+    }
+
+    // RESET DO PROGRESSO DO FEIXE
+    function resetProgress() {
+      state.progress = 0;
+      render();
+    }
+
+    // CONTROLO DE VELOCIDADE
+    function setAnimationSpeed(speed) {
+      state.animationSpeed = speed;
+      const btnSlow = document.getElementById('btn-speed-slow');
+      const btnMed = document.getElementById('btn-speed-medium');
+      const btnFast = document.getElementById('btn-speed-fast');
+      const badgeSpeed = document.getElementById('badge-speed');
+
+      btnSlow.className = "py-1 rounded text-[10px] font-bold border transition-all bg-slate-950 border-slate-800 text-slate-500 hover:text-slate-300";
+      btnMed.className = "py-1 rounded text-[10px] font-bold border transition-all bg-slate-950 border-slate-800 text-slate-500 hover:text-slate-300";
+      btnFast.className = "py-1 rounded text-[10px] font-bold border transition-all bg-slate-950 border-slate-800 text-slate-500 hover:text-slate-300";
+
+      if (speed === 3.0) {
+        btnSlow.className = "py-1 rounded text-[10px] font-bold border transition-all bg-indigo-500/20 border-indigo-500 text-indigo-300";
+        badgeSpeed.textContent = "Super Lenta";
+      } else if (speed === 1.5) {
+        btnMed.className = "py-1 rounded text-[10px] font-bold border transition-all bg-indigo-500/20 border-indigo-500 text-indigo-300";
+        badgeSpeed.textContent = "Moderada";
+      } else {
+        btnFast.className = "py-1 rounded text-[10px] font-bold border transition-all bg-indigo-500/20 border-indigo-500 text-indigo-300";
+        badgeSpeed.textContent = "Rápida";
+      }
+    }
+
+    // ATUALIZAR PARÂMETROS VIA SLIDERS
+    function updateParam(param, value) {
+      state[param] = Number(value);
+      
+      // Atualizar badges de feedback numérico no painel
+      document.getElementById('badge-p').textContent = `${state.objectP} cm`;
+      document.getElementById('badge-height').textContent = `${state.objectHeight} cm`;
+      document.getElementById('badge-f').textContent = `${state.focalLength} cm`;
+
+      render();
+    }
+
+    // ATIVAR / DESATIVAR RAIOS INDIVIDUAIS
+    function toggleRay(rayIndex, checked) {
+      state[`showRay${rayIndex}`] = checked;
+      render();
+    }
+
+    // RESET DO SIMULADOR PARA VALORES DE FÁBRICA
+    function resetAll() {
+      state.mirrorType = 'concave';
+      state.focalLength = 150;
+      state.objectP = 250;
+      state.objectHeight = 80;
+      state.showRay1 = true;
+      state.showRay2 = true;
+      state.showRay3 = false;
+      state.showRay4 = false;
+      state.progress = 0;
+      state.isPlaying = true;
+      state.animationSpeed = 1.5;
+
+      // Reset sliders do DOM
+      inputP.value = 250;
+      inputHeight.value = 80;
+      inputF.value = 150;
+
+      // Sincronizar checkboxes
+      document.getElementById('check-ray1').checked = true;
+      document.getElementById('check-ray2').checked = true;
+      document.getElementById('check-ray3').checked = false;
+      document.getElementById('check-ray4').checked = false;
+
+      // Sincronizar botões de velocidade e espelho
+      setMirrorType('concave');
+      setAnimationSpeed(1.5);
+      
+      // Forçar atualização visual completa
+      render();
+    }
+
+    // LOOP DE ANIMAÇÃO COM REQUEST ANIMATION FRAME
+    function startAnimationLoop() {
+      let lastTime = performance.now();
+
+      function update(time) {
+        if (state.isPlaying) {
+          const delta = (time - lastTime) / 1000; // segundos
+          state.progress += delta / state.animationSpeed;
+          if (state.progress > 1) {
+            state.progress = 0;
+          }
+          
+          // Atualiza frentes de onda e barra de progresso no DOM
+          document.getElementById('progress-bar').style.width = `${state.progress * 100}%`;
+          const statusLabel = document.getElementById('label-beam-status');
+          if (state.progress < 0.5) {
+            statusLabel.textContent = "Incidindo...";
+            document.getElementById('progress-bar').className = "h-full bg-amber-500 transition-all duration-75";
+          } else {
+            statusLabel.textContent = "Refletindo!";
+            document.getElementById('progress-bar').className = "h-full bg-rose-500 transition-all duration-75";
+          }
+          
+          // Atualiza as posições geométricas e os fótons no SVG animado
+          updateAnimatedPhotons();
+        }
+        lastTime = time;
+        requestAnimationFrame(update);
+      }
+      requestAnimationFrame(update);
+    }
+
+    // ARRASTAMENTO DO OBJETO COM PONTEIRO (TOUCH E MOUSE)
+    function setupDragging() {
+      const objGroup = document.getElementById('obj-group');
+
+      objGroup.addEventListener('pointerdown', (e) => {
+        state.isDragging = true;
+        objGroup.setPointerCapture(e.pointerId);
+        e.stopPropagation();
+      });
+
+      objGroup.addEventListener('pointermove', (e) => {
+        if (!state.isDragging) return;
+        
+        const rect = canvasSvg.getBoundingClientRect();
+        // Escala entre a largura real do ecrã e a largura interna de 1000px do viewBox SVG
+        const scaleX = 1000 / rect.width;
+        const currentSvgX = (e.clientX - rect.left) * scaleX;
+        
+        // Distância do vértice Vx (500) à coordenada atual X do SVG
+        let newP = Vx - currentSvgX;
+        
+        // Limites físicos de arrasto para não quebrar a lógica geométrica
+        if (newP < 25) newP = 25;
+        if (newP > 480) newP = 480;
+
+        state.objectP = Math.round(newP);
+        inputP.value = state.objectP;
+        document.getElementById('badge-p').textContent = `${state.objectP} cm`;
+        
+        render();
+      });
+
+      objGroup.addEventListener('pointerup', (e) => {
+        if (state.isDragging) {
+          objGroup.releasePointerCapture(e.pointerId);
+          state.isDragging = false;
+        }
+      });
+    }
+
+    // FUNÇÃO AUXILIAR PARA ESTENDER GEOMETRICAMENTE RETAS NO CANVAS
+    function getExtendedPoint(x1, y1, x2, y2, targetX) {
+      if (Math.abs(x2 - x1) < 0.1) return { x: x2, y: y2 };
+      const m = (y2 - y1) / (x2 - x1);
+      return { x: targetX, y: y1 + m * (targetX - x1) };
+    }
+
+    // INTERPOLAÇÃO DE COORDENADAS PARA DESENHAR O CAMINHO ANIMADO DO FÓTON
+    function getAnimatedRayCoords(pStart, pMirror, pEnd, pVirtualEnd = null) {
+      let x, y;
+      let isVirtual = false;
+      const progress = state.progress;
+
+      if (progress <= 0.5) {
+        // Incidência
+        const t = progress / 0.5;
+        x = pStart.x + (pMirror.x - pStart.x) * t;
+        y = pStart.y + (pMirror.y - pStart.y) * t;
+      } else {
+        // Reflexão
+        const t = (progress - 0.5) / 0.5;
+        x = pMirror.x + (pEnd.x - pMirror.x) * t;
+        y = pMirror.y + (pEnd.y - pMirror.y) * t;
+        if (pVirtualEnd && t > 0) {
+          isVirtual = true;
+        }
+      }
+      return { x, y, isVirtual };
+    }
+
+    // ATUALIZAÇÃO SÍNCRONA DOS FÓTONS INDIVIDUAIS COM O FRAME-LOOP
+    function updateAnimatedPhotons() {
+      // recalcula geometria instantânea
+      const geom = calculateGeometry();
+
+      // Raio 1
+      if (state.showRay1) {
+        const coords = getAnimatedRayCoords(geom.r1Start, geom.r1Mirror, geom.r1End, geom.r1VirtualEnd);
+        const p1 = document.getElementById('photon1');
+        p1.setAttribute('cx', coords.x);
+        p1.setAttribute('cy', coords.y);
+        
+        // Atualiza linhas dinâmicas de incidência e reflexão
+        const lineIn = document.getElementById('ray1-in');
+        const lineOut = document.getElementById('ray1-out');
+        const lineVirtual = document.getElementById('ray1-virtual');
+        
+        if (state.progress <= 0.5) {
+          lineIn.setAttribute('x1', geom.r1Start.x);
+          lineIn.setAttribute('y1', geom.r1Start.y);
+          lineIn.setAttribute('x2', coords.x);
+          lineIn.setAttribute('y2', coords.y);
+          lineOut.setAttribute('x1', 0); lineOut.setAttribute('y1', 0); lineOut.setAttribute('x2', 0); lineOut.setAttribute('y2', 0);
+          lineVirtual.setAttribute('x1', 0); lineVirtual.setAttribute('y1', 0); lineVirtual.setAttribute('x2', 0); lineVirtual.setAttribute('y2', 0);
+        } else {
+          lineIn.setAttribute('x1', geom.r1Start.x);
+          lineIn.setAttribute('y1', geom.r1Start.y);
+          lineIn.setAttribute('x2', geom.r1Mirror.x);
+          lineIn.setAttribute('y2', geom.r1Mirror.y);
+          
+          lineOut.setAttribute('x1', geom.r1Mirror.x);
+          lineOut.setAttribute('y1', geom.r1Mirror.y);
+          lineOut.setAttribute('x2', coords.x);
+          lineOut.setAttribute('y2', coords.y);
+
+          if (geom.r1VirtualEnd) {
+            const t = (state.progress - 0.5) / 0.5;
+            lineVirtual.setAttribute('x1', geom.r1Mirror.x);
+            lineVirtual.setAttribute('y1', geom.r1Mirror.y);
+            lineVirtual.setAttribute('x2', geom.r1Mirror.x + (geom.r1VirtualEnd.x - geom.r1Mirror.x) * t);
+            lineVirtual.setAttribute('y2', geom.r1Mirror.y + (geom.r1VirtualEnd.y - geom.r1Mirror.y) * t);
+          } else {
+            lineVirtual.setAttribute('x1', 0); lineVirtual.setAttribute('y1', 0); lineVirtual.setAttribute('x2', 0); lineVirtual.setAttribute('y2', 0);
+          }
+        }
+      }
+
+      // Raio 2
+      if (state.showRay2) {
+        const coords = getAnimatedRayCoords(geom.r2Start, geom.r2Mirror, geom.r2End, geom.r2VirtualEnd);
+        const p2 = document.getElementById('photon2');
+        p2.setAttribute('cx', coords.x);
+        p2.setAttribute('cy', coords.y);
+
+        const lineIn = document.getElementById('ray2-in');
+        const lineOut = document.getElementById('ray2-out');
+        const lineVirtual = document.getElementById('ray2-virtual');
+        
+        if (state.progress <= 0.5) {
+          lineIn.setAttribute('x1', geom.r2Start.x);
+          lineIn.setAttribute('y1', geom.r2Start.y);
+          lineIn.setAttribute('x2', coords.x);
+          lineIn.setAttribute('y2', coords.y);
+          lineOut.setAttribute('x1', 0); lineOut.setAttribute('y1', 0); lineOut.setAttribute('x2', 0); lineOut.setAttribute('y2', 0);
+          lineVirtual.setAttribute('x1', 0); lineVirtual.setAttribute('y1', 0); lineVirtual.setAttribute('x2', 0); lineVirtual.setAttribute('y2', 0);
+        } else {
+          lineIn.setAttribute('x1', geom.r2Start.x);
+          lineIn.setAttribute('y1', geom.r2Start.y);
+          lineIn.setAttribute('x2', geom.r2Mirror.x);
+          lineIn.setAttribute('y2', geom.r2Mirror.y);
+          
+          lineOut.setAttribute('x1', geom.r2Mirror.x);
+          lineOut.setAttribute('y1', geom.r2Mirror.y);
+          lineOut.setAttribute('x2', coords.x);
+          lineOut.setAttribute('y2', coords.y);
+
+          if (geom.r2VirtualEnd) {
+            const t = (state.progress - 0.5) / 0.5;
+            lineVirtual.setAttribute('x1', geom.r2Mirror.x);
+            lineVirtual.setAttribute('y1', geom.r2Mirror.y);
+            lineVirtual.setAttribute('x2', geom.r2Mirror.x + (geom.r2VirtualEnd.x - geom.r2Mirror.x) * t);
+            lineVirtual.setAttribute('y2', geom.r2Mirror.y + (geom.r2VirtualEnd.y - geom.r2Mirror.y) * t);
+          } else {
+            lineVirtual.setAttribute('x1', 0); lineVirtual.setAttribute('y1', 0); lineVirtual.setAttribute('x2', 0); lineVirtual.setAttribute('y2', 0);
+          }
+        }
+      }
+
+      // Raio 3
+      if (state.showRay3) {
+        const coords = getAnimatedRayCoords(geom.r3Start, geom.r3Mirror, geom.r3End, geom.r3VirtualEnd);
+        const p3 = document.getElementById('photon3');
+        p3.setAttribute('cx', coords.x);
+        p3.setAttribute('cy', coords.y);
+
+        const lineIn = document.getElementById('ray3-in');
+        const lineOut = document.getElementById('ray3-out');
+        const lineVirtual = document.getElementById('ray3-virtual');
+        
+        if (state.progress <= 0.5) {
+          lineIn.setAttribute('x1', geom.r3Start.x);
+          lineIn.setAttribute('y1', geom.r3Start.y);
+          lineIn.setAttribute('x2', coords.x);
+          lineIn.setAttribute('y2', coords.y);
+          lineOut.setAttribute('x1', 0); lineOut.setAttribute('y1', 0); lineOut.setAttribute('x2', 0); lineOut.setAttribute('y2', 0);
+          lineVirtual.setAttribute('x1', 0); lineVirtual.setAttribute('y1', 0); lineVirtual.setAttribute('x2', 0); lineVirtual.setAttribute('y2', 0);
+        } else {
+          lineIn.setAttribute('x1', geom.r3Start.x);
+          lineIn.setAttribute('y1', geom.r3Start.y);
+          lineIn.setAttribute('x2', geom.r3Mirror.x);
+          lineIn.setAttribute('y2', geom.r3Mirror.y);
+          
+          lineOut.setAttribute('x1', geom.r3Mirror.x);
+          lineOut.setAttribute('y1', geom.r3Mirror.y);
+          lineOut.setAttribute('x2', coords.x);
+          lineOut.setAttribute('y2', coords.y);
+
+          if (geom.r3VirtualEnd) {
+            const t = (state.progress - 0.5) / 0.5;
+            lineVirtual.setAttribute('x1', geom.r3Mirror.x);
+            lineVirtual.setAttribute('y1', geom.r3Mirror.y);
+            lineVirtual.setAttribute('x2', geom.r3Mirror.x + (geom.r3VirtualEnd.x - geom.r3Mirror.x) * t);
+            lineVirtual.setAttribute('y2', geom.r3Mirror.y + (geom.r3VirtualEnd.y - geom.r3Mirror.y) * t);
+          } else {
+            lineVirtual.setAttribute('x1', 0); lineVirtual.setAttribute('y1', 0); lineVirtual.setAttribute('x2', 0); lineVirtual.setAttribute('y2', 0);
+          }
+        }
+      }
+
+      // Raio 4
+      if (state.showRay4) {
+        const coords = getAnimatedRayCoords(geom.r4Start, geom.r4Mirror, geom.r4End, geom.r4VirtualEnd);
+        const p4 = document.getElementById('photon4');
+        p4.setAttribute('cx', coords.x);
+        p4.setAttribute('cy', coords.y);
+
+        const lineIn = document.getElementById('ray4-in');
+        const lineOut = document.getElementById('ray4-out');
+        const lineVirtual = document.getElementById('ray4-virtual');
+        
+        if (state.progress <= 0.5) {
+          lineIn.setAttribute('x1', geom.r4Start.x);
+          lineIn.setAttribute('y1', geom.r4Start.y);
+          lineIn.setAttribute('x2', coords.x);
+          lineIn.setAttribute('y2', coords.y);
+          lineOut.setAttribute('x1', 0); lineOut.setAttribute('y1', 0); lineOut.setAttribute('x2', 0); lineOut.setAttribute('y2', 0);
+          lineVirtual.setAttribute('x1', 0); lineVirtual.setAttribute('y1', 0); lineVirtual.setAttribute('x2', 0); lineVirtual.setAttribute('y2', 0);
+        } else {
+          lineIn.setAttribute('x1', geom.r4Start.x);
+          lineIn.setAttribute('y1', geom.r4Start.y);
+          lineIn.setAttribute('x2', geom.r4Mirror.x);
+          lineIn.setAttribute('y2', geom.r4Mirror.y);
+          
+          lineOut.setAttribute('x1', geom.r4Mirror.x);
+          lineOut.setAttribute('y1', geom.r4Mirror.y);
+          lineOut.setAttribute('x2', coords.x);
+          lineOut.setAttribute('y2', coords.y);
+
+          if (geom.r4VirtualEnd) {
+            const t = (state.progress - 0.5) / 0.5;
+            lineVirtual.setAttribute('x1', geom.r4Mirror.x);
+            lineVirtual.setAttribute('y1', geom.r4Mirror.y);
+            lineVirtual.setAttribute('x2', geom.r4Mirror.x + (geom.r4VirtualEnd.x - geom.r4Mirror.x) * t);
+            lineVirtual.setAttribute('y2', geom.r4Mirror.y + (geom.r4VirtualEnd.y - geom.r4Mirror.y) * t);
+          } else {
+            lineVirtual.setAttribute('x1', 0); lineVirtual.setAttribute('y1', 0); lineVirtual.setAttribute('x2', 0); lineVirtual.setAttribute('y2', 0);
+          }
+        }
+      }
+    }
+
+    // CALCULAR GEOMETRIA MATEMÁTICA E COORDENADAS ESTÁTICAS DE TOQUE DO ESPELHO
+    function calculateGeometry() {
+      const fVal = state.mirrorType === 'concave' ? state.focalLength : -state.focalLength;
+      
+      let pPrime = 0;
+      let imageExists = true;
+      let isAtFocus = false;
+
+      if (Math.abs(state.objectP - state.focalLength) < 2 && state.mirrorType === 'concave') {
+        isAtFocus = true;
+        imageExists = false;
+      } else {
+        pPrime = (fVal * state.objectP) / (state.objectP - fVal);
+      }
+
+      const magnification = isAtFocus ? 0 : -pPrime / state.objectP;
+      const imageHeight = isAtFocus ? 0 : magnification * state.objectHeight;
+
+      const ox = Vx - state.objectP;
+      const oy = Vy - state.objectHeight;
+      const ix = Vx - pPrime;
+      const iy = Vy - imageHeight;
+
+      const fx = state.mirrorType === 'concave' ? Vx - state.focalLength : Vx + state.focalLength;
+      const cx = state.mirrorType === 'concave' ? Vx - 2 * state.focalLength : Vx + 2 * state.focalLength;
+
+      // Geometria Raio 1
+      const r1Start = { x: ox, y: oy };
+      const r1Mirror = { x: Vx, y: oy };
+      let r1End, r1VirtualEnd;
+      if (state.mirrorType === 'concave') {
+        r1End = getExtendedPoint(Vx, oy, fx, Vy, 50);
+        r1VirtualEnd = pPrime < 0 ? getExtendedPoint(fx, Vy, Vx, oy, 950) : null;
+      } else {
+        r1End = getExtendedPoint(fx, Vy, Vx, oy, 50);
+        r1VirtualEnd = { x: fx, y: Vy };
+      }
+
+      // Geometria Raio 2
+      let r2Start = { x: ox, y: oy };
+      let r2Mirror, r2End, r2VirtualEnd;
+      if (state.mirrorType === 'concave') {
+        const m = (Vy - oy) / (fx - ox);
+        const mY = oy + m * (Vx - ox);
+        r2Mirror = { x: Vx, y: mY };
+        r2End = { x: 50, y: mY };
+        r2VirtualEnd = pPrime < 0 ? { x: 950, y: mY } : null;
+      } else {
+        const m = (Vy - oy) / (fx - ox);
+        const mY = oy + m * (Vx - ox);
+        r2Mirror = { x: Vx, y: mY };
+        r2End = { x: 50, y: mY };
+        r2VirtualEnd = { x: fx, y: Vy };
+      }
+
+      // Geometria Raio 3
+      let r3Start = { x: ox, y: oy };
+      let r3Mirror, r3End, r3VirtualEnd;
+      if (state.mirrorType === 'concave') {
+        const m = (Vy - oy) / (cx - ox);
+        const mY = oy + m * (Vx - ox);
+        r3Mirror = { x: Vx, y: mY };
+        r3End = getExtendedPoint(Vx, mY, cx, Vy, 50);
+        r3VirtualEnd = pPrime < 0 ? getExtendedPoint(cx, Vy, Vx, mY, 950) : null;
+      } else {
+        const m = (Vy - oy) / (cx - ox);
+        const mY = oy + m * (Vx - ox);
+        r3Mirror = { x: Vx, y: mY };
+        r3End = getExtendedPoint(cx, Vy, Vx, mY, 50);
+        r3VirtualEnd = { x: cx, y: Vy };
+      }
+
+      // Geometria Raio 4
+      const r4Start = { x: ox, y: oy };
+      const r4Mirror = { x: Vx, y: Vy };
+      const r4ReflectedY = Vy + (Vy - oy) * (Vx - 50) / (Vx - ox);
+      const r4End = { x: 50, y: r4ReflectedY };
+      const r4VirtualEnd = { x: 950, y: Vy - (r4ReflectedY - Vy) };
+
+      return {
+        fVal, pPrime, imageExists, isAtFocus, magnification, imageHeight,
+        ox, oy, ix, iy, fx, cx,
+        r1Start, r1Mirror, r1End, r1VirtualEnd,
+        r2Start, r2Mirror, r2End, r2VirtualEnd,
+        r3Start, r3Mirror, r3End, r3VirtualEnd,
+        r4Start, r4Mirror, r4End, r4VirtualEnd
+      };
+    }
+
+    // RENDERIZAR TODO O VISUAL DO ESPELHO E ELEMENTOS ESTÁTICOS DO SVG E INFO TEXTS
+    function render() {
+      const geom = calculateGeometry();
+
+      // 1. Atualizar Pontos de Referência F, C
+      const ptF = document.getElementById('point-f');
+      const lblF = document.getElementById('label-f');
+      ptF.setAttribute('cx', geom.fx);
+      lblF.setAttribute('x', geom.fx);
+
+      const ptC = document.getElementById('point-c');
+      const lblC = document.getElementById('label-c');
+      ptC.setAttribute('cx', geom.cx);
+      lblC.setAttribute('x', geom.cx);
+
+      // 2. Curvatura do Espelho (Quadrática de Bezier)
+      const curveOffset = 30; 
+      const mCurve = document.getElementById('mirror-curve');
+      const backMarksContainer = document.getElementById('mirror-back-marks');
+      
+      // Limpar marcações anteriores da traseira
+      backMarksContainer.innerHTML = '';
+
+      let pathData = "";
+      if (state.mirrorType === 'concave') {
+        // Côncavo: Pontas curvam para o lado do objeto (esquerda)
+        pathData = `M ${Vx - curveOffset} 70 Q ${Vx} ${Vy} ${Vx - curveOffset} 430`;
+        
+        // Desenha rabiscos na traseira (lado direito da face)
+        for (let i = 80; i <= 420; i += 20) {
+          const t = Math.abs(i - Vy) / 180;
+          const currentX = Vx - curveOffset * (1 - t * t);
+          const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          line.setAttribute('x1', currentX);
+          line.setAttribute('y1', i);
+          line.setAttribute('x2', currentX + 10);
+          line.setAttribute('y2', i + 6);
+          backMarksContainer.appendChild(line);
+        }
+      } else {
+        // Convexo: Centro projeta-se em direção ao objeto, extremidades recuam para a direita
+        pathData = `M ${Vx + curveOffset} 70 Q ${Vx} ${Vy} ${Vx + curveOffset} 430`;
+        
+        // Desenha rabiscos na traseira (lado direito interno)
+        for (let i = 80; i <= 420; i += 20) {
+          const t = Math.abs(i - Vy) / 180;
+          const currentX = Vx + curveOffset * (1 - t * t);
+          const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          line.setAttribute('x1', currentX);
+          line.setAttribute('y1', i);
+          line.setAttribute('x2', currentX - 10);
+          line.setAttribute('y2', i + 6);
+          backMarksContainer.appendChild(line);
+        }
+      }
+      mCurve.setAttribute('d', pathData);
+
+      // 3. Atualizar Guias Estáticas Discretas
+      const g1in = document.getElementById('guide-r1-in');
+      const g1out = document.getElementById('guide-r1-out');
+      if (state.showRay1) {
+        g1in.setAttribute('x1', geom.r1Start.x); g1in.setAttribute('y1', geom.r1Start.y); g1in.setAttribute('x2', geom.r1Mirror.x); g1in.setAttribute('y2', geom.r1Mirror.y); g1in.classList.remove('hidden');
+        g1out.setAttribute('x1', geom.r1Mirror.x); g1out.setAttribute('y1', geom.r1Mirror.y); g1out.setAttribute('x2', geom.r1End.x); g1out.setAttribute('y2', geom.r1End.y); g1out.classList.remove('hidden');
+        document.getElementById('grp-ray1').classList.remove('hidden');
+      } else {
+        g1in.classList.add('hidden'); g1out.classList.add('hidden');
+        document.getElementById('grp-ray1').classList.add('hidden');
+      }
+
+      const g2in = document.getElementById('guide-r2-in');
+      const g2out = document.getElementById('guide-r2-out');
+      if (state.showRay2) {
+        g2in.setAttribute('x1', geom.r2Start.x); g2in.setAttribute('y1', geom.r2Start.y); g2in.setAttribute('x2', geom.r2Mirror.x); g2in.setAttribute('y2', geom.r2Mirror.y); g2in.classList.remove('hidden');
+        g2out.setAttribute('x1', geom.r2Mirror.x); g2out.setAttribute('y1', geom.r2Mirror.y); g2out.setAttribute('x2', geom.r2End.x); g2out.setAttribute('y2', geom.r2End.y); g2out.classList.remove('hidden');
+        document.getElementById('grp-ray2').classList.remove('hidden');
+      } else {
+        g2in.classList.add('hidden'); g2out.classList.add('hidden');
+        document.getElementById('grp-ray2').classList.add('hidden');
+      }
+
+      const g3in = document.getElementById('guide-r3-in');
+      const g3out = document.getElementById('guide-r3-out');
+      if (state.showRay3) {
+        g3in.setAttribute('x1', geom.r3Start.x); g3in.setAttribute('y1', geom.r3Start.y); g3in.setAttribute('x2', geom.r3Mirror.x); g3in.setAttribute('y2', geom.r3Mirror.y); g3in.classList.remove('hidden');
+        g3out.setAttribute('x1', geom.r3Mirror.x); g3out.setAttribute('y1', geom.r3Mirror.y); g3out.setAttribute('x2', geom.r3End.x); g3out.setAttribute('y2', geom.r3End.y); g3out.classList.remove('hidden');
+        document.getElementById('grp-ray3').classList.remove('hidden');
+      } else {
+        g3in.classList.add('hidden'); g3out.classList.add('hidden');
+        document.getElementById('grp-ray3').classList.add('hidden');
+      }
+
+      const g4in = document.getElementById('guide-r4-in');
+      const g4out = document.getElementById('guide-r4-out');
+      if (state.showRay4) {
+        g4in.setAttribute('x1', geom.r4Start.x); g4in.setAttribute('y1', geom.r4Start.y); g4in.setAttribute('x2', geom.r4Mirror.x); g4in.setAttribute('y2', geom.r4Mirror.y); g4in.classList.remove('hidden');
+        g4out.setAttribute('x1', geom.r4Mirror.x); g4out.setAttribute('y1', geom.r4Mirror.y); g4out.setAttribute('x2', geom.r4End.x); g4out.setAttribute('y2', geom.r4End.y); g4out.classList.remove('hidden');
+        document.getElementById('grp-ray4').classList.remove('hidden');
+      } else {
+        g4in.classList.add('hidden'); g4out.classList.add('hidden');
+        document.getElementById('grp-ray4').classList.add('hidden');
+      }
+
+      // 4. Desenhar Seta do Objeto
+      const objArrow = document.getElementById('obj-arrow');
+      const objBase = document.getElementById('obj-base');
+      const objDragArea = document.getElementById('obj-drag-area');
+      const objLabelRect = document.getElementById('obj-label-rect');
+      const objLabelText = document.getElementById('obj-label-text');
+
+      objArrow.setAttribute('x1', geom.ox); objArrow.setAttribute('y1', Vy);
+      objArrow.setAttribute('x2', geom.ox); objArrow.setAttribute('y2', geom.oy);
+      
+      objBase.setAttribute('cx', geom.ox); objBase.setAttribute('cy', Vy);
+      objDragArea.setAttribute('cx', geom.ox); objDragArea.setAttribute('cy', geom.oy);
+
+      objLabelRect.setAttribute('x', geom.ox - 30); objLabelRect.setAttribute('y', geom.oy - 35);
+      objLabelText.setAttribute('x', geom.ox); objLabelText.setAttribute('y', geom.oy - 21);
+
+      // 5. Desenhar Seta da Imagem se existir
+      const imgGroup = document.getElementById('img-group');
+      if (geom.imageExists) {
+        imgGroup.classList.remove('hidden');
+        const imgArrow = document.getElementById('img-arrow');
+        const imgBase = document.getElementById('img-base');
+        const imgLabelRect = document.getElementById('img-label-rect');
+        const imgLabelText = document.getElementById('img-label-text');
+
+        imgArrow.setAttribute('x1', geom.ix); imgArrow.setAttribute('y1', Vy);
+        imgArrow.setAttribute('x2', geom.ix); imgArrow.setAttribute('y2', geom.iy);
+        
+        // Se a imagem for virtual, a seta fica tracejada
+        if (geom.pPrime < 0) {
+          imgArrow.setAttribute('stroke-dasharray', '6,4');
+        } else {
+          imgArrow.removeAttribute('stroke-dasharray');
+        }
+
+        imgBase.setAttribute('cx', geom.ix); imgBase.setAttribute('cy', Vy);
+
+        const labelY = geom.iy > Vy ? geom.iy + 10 : geom.iy - 32;
+        imgLabelRect.setAttribute('x', geom.ix - 30); imgLabelRect.setAttribute('y', labelY);
+        imgLabelText.setAttribute('x', geom.ix); imgLabelText.setAttribute('y', labelY + 14);
+      } else {
+        imgGroup.classList.add('hidden');
+      }
+
+      // 6. Atualizar Textos de Classificação da Imagem (Física)
+      let natureStr = "", orientStr = "", sizeStr = "";
+      if (geom.isAtFocus) {
+        natureStr = "Imprópria"; orientStr = "Nula"; sizeStr = "Infinita (No infinito)";
+      } else if (state.mirrorType === 'concave') {
+        if (state.objectP > 2 * state.focalLength) {
+          natureStr = "Real"; orientStr = "Invertida"; sizeStr = "Reduzida";
+        } else if (Math.abs(state.objectP - 2 * state.focalLength) < 1) {
+          natureStr = "Real"; orientStr = "Invertida"; sizeStr = "De igual tamanho";
+        } else if (state.objectP < 2 * state.focalLength && state.objectP > state.focalLength) {
+          natureStr = "Real"; orientStr = "Invertida"; sizeStr = "Ampliada";
+        } else if (state.objectP < state.focalLength) {
+          natureStr = "Virtual"; orientStr = "Direita"; sizeStr = "Ampliada";
+        }
+      } else {
+        natureStr = "Virtual"; orientStr = "Direita"; sizeStr = "Reduzida";
+      }
+
+      const txtNature = document.getElementById('txt-nature');
+      txtNature.textContent = natureStr;
+      if (natureStr === 'Real') {
+        txtNature.className = "font-bold text-emerald-400";
+      } else if (natureStr === 'Virtual') {
+        txtNature.className = "font-bold text-purple-400";
+      } else {
+        txtNature.className = "font-bold text-rose-400";
+      }
+
+      const txtOrient = document.getElementById('txt-orientation');
+      txtOrient.textContent = orientStr;
+      if (orientStr === 'Direita') {
+        txtOrient.className = "font-bold text-blue-400";
+      } else if (orientStr === 'Invertida') {
+        txtOrient.className = "font-bold text-amber-500";
+      } else {
+        txtOrient.className = "font-bold text-slate-500";
+      }
+
+      document.getElementById('txt-size').textContent = sizeStr;
+
+      // Dicas Dinâmicas no rodapé explicativo
+      const tipHeader = document.getElementById('txt-pedagogic-tip');
+      const subTipHeader = document.getElementById('txt-pedagogic-subtip');
+      
+      if (state.mirrorType === 'concave') {
+        tipHeader.innerHTML = `No espelho <strong>Côncavo</strong>, note como a luz cruza-se fisicamente no espaço real para formar imagens reais.`;
+        subTipHeader.textContent = `A imagem pode ser maior, menor, invertida ou direita, variando inteiramente consoante a aproximação do Objeto à linha focal do espelho.`;
+      } else {
+        tipHeader.innerHTML = `No espelho <strong>Convexo</strong>, os raios refletidos abrem-se (divergem) no exterior do espelho.`;
+        subTipHeader.textContent = `A imagem virtual é sempre criada no interior do espelho onde os prolongamentos tracejados se encontram, sendo sempre Direita e Menor.`;
+      }
+
+      // Atualiza fótons de luz
+      updateAnimatedPhotons();
+    }
+  </script>
+</body>
+</html>
