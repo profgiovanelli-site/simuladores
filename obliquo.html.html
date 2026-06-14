@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lançamento Oblíquo - ProfGiovanelli</title>
+    <!-- Tailwind CSS para design responsivo e moderno -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome para ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .canvas-container {
+            position: relative;
+            background-color: #0b0f19; /* Slate profundo para estilo laboratório escuro */
+        }
+        /* Custom ranges styling */
+        input[type="range"]::-webkit-slider-thumb {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 min-h-screen text-slate-100 flex flex-col justify-between">
+
+    <!-- Header Principal -->
+    <header class="bg-slate-950 border-b border-indigo-950/80 py-4 px-6 shadow-2xl">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-violet-400 flex items-center gap-3">
+                    <i class="fa-solid fa-rocket text-amber-400 animate-pulse"></i>
+                    Lançamento Oblíquo ProfGiovanelli
+                </h1>
+                <p class="text-slate-400 text-xs mt-1 font-semibold tracking-wider uppercase">Física Interativa • Independência dos Movimentos</p>
+            </div>
+            <div class="bg-indigo-950/40 border border-indigo-500/20 rounded-xl px-4 py-2.5 text-xs max-w-md">
+                <span class="font-bold text-amber-400"><i class="fa-solid fa-graduation-cap"></i> Foco Didático:</span> 
+                Observe que o projétil amarela combina o avanço constante em <span class="text-blue-400 font-bold">X (MU)</span> com a subida/descida acelerada em <span class="text-red-400 font-bold">Y (MUV)</span>.
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl w-full mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow">
+        
+        <!-- COLUNA DA ESQUERDA: Simulação e Gráficos (8 colunas) -->
+        <div class="lg:col-span-8 flex flex-col gap-6">
+            
+            <!-- Painel de Simulação -->
+            <div class="bg-slate-950 rounded-2xl shadow-2xl border border-slate-800/80 overflow-hidden flex flex-col">
+                <div class="bg-slate-900/50 px-5 py-3 border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-2">
+                    <span class="font-bold text-slate-300 flex items-center gap-2 text-sm">
+                        <i class="fa-solid fa-circle-dot text-indigo-500"></i> Arena de Lançamento Virtual
+                    </span>
+                    <div class="flex items-center gap-4 text-xs font-semibold">
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> Eixo X (MU)</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-red-500"></span> Eixo Y (MUV)</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Resultante</span>
+                    </div>
+                </div>
+
+                <!-- Canvas de Simulação Física -->
+                <div class="canvas-container w-full h-[400px]">
+                    <canvas id="simulationCanvas" class="w-full h-full block"></canvas>
+                </div>
+
+                <!-- Controles de Playback / Linha do Tempo -->
+                <div class="p-4 bg-slate-900/60 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center gap-2 w-full sm:w-auto justify-center">
+                        <button id="btnPlay" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold shadow-lg transition duration-200 flex items-center gap-2 text-sm">
+                            <i class="fa-solid fa-play"></i> Lançar
+                        </button>
+                        <button id="btnPause" class="px-5 py-2.5 bg-amber-600 hover:bg-amber-500 text-white rounded-xl font-bold shadow-lg transition duration-200 hidden flex items-center gap-2 text-sm">
+                            <i class="fa-solid fa-pause"></i> Pausar
+                        </button>
+                        <button id="btnStepBack" class="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition duration-150" title="Voltar 0.05s">
+                            <i class="fa-solid fa-backward"></i>
+                        </button>
+                        <button id="btnStepForward" class="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition duration-150" title="Avançar 0.05s">
+                            <i class="fa-solid fa-forward"></i>
+                        </button>
+                        <button id="btnReset" class="px-4 py-2.5 bg-slate-800 hover:bg-rose-900/50 hover:text-rose-300 text-slate-400 rounded-xl font-bold transition duration-200 flex items-center gap-2 text-sm">
+                            <i class="fa-solid fa-arrow-rotate-left"></i> Reiniciar
+                        </button>
+                    </div>
+
+                    <!-- Barra de Progresso / Scrubbing -->
+                    <div class="w-full sm:flex-1 flex items-center gap-3 bg-slate-950 p-2.5 rounded-xl border border-slate-800/60">
+                        <span class="text-xs font-bold text-slate-400">Tempo (t):</span>
+                        <input id="timeScroller" type="range" min="0" max="100" value="0" class="flex-1 accent-indigo-500 h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer">
+                        <span id="lblTime" class="text-xs font-mono font-bold bg-slate-900 px-2 py-1 rounded text-indigo-400 border border-slate-800">0.00s</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Painel de Gráficos -->
+            <div class="bg-slate-950 rounded-2xl shadow-2xl border border-slate-800/80 overflow-hidden">
+                <div class="bg-slate-900/50 px-5 py-3 border-b border-slate-800/80 flex justify-between items-center flex-wrap gap-2">
+                    <span class="font-bold text-slate-300 flex items-center gap-2 text-sm">
+                        <i class="fa-solid fa-chart-line text-indigo-400"></i> Gráficos Sincronizados
+                    </span>
+                    <select id="graphType" class="text-xs font-semibold border border-slate-800 rounded-lg px-2.5 py-1.5 bg-slate-900 text-slate-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="pos">Posição vs Tempo: x(t) & y(t)</option>
+                        <option value="vel">Velocidade vs Tempo: Vx(t) & Vy(t)</option>
+                    </select>
+                </div>
+                <div class="p-4 bg-slate-950 h-[200px]">
+                    <canvas id="graphCanvas" class="w-full h-full block"></canvas>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- COLUNA DA DIREITA: Controles e Cálculos (4 colunas) -->
+        <div class="lg:col-span-4 flex flex-col gap-6">
+            
+            <!-- Configurações Físicas -->
+            <div class="bg-slate-950 rounded-2xl shadow-2xl border border-slate-800/80 p-6 flex flex-col gap-5">
+                <h3 class="text-base font-extrabold text-slate-200 border-b border-slate-800 pb-2.5 flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-indigo-400"></i> Parâmetros de Lançamento
+                </h3>
+
+                <!-- Slider Ângulo -->
+                <div class="flex flex-col gap-1.5">
+                    <div class="flex justify-between items-center text-xs font-bold">
+                        <span class="text-slate-400">Ângulo de Disparo (&theta;)</span>
+                        <span id="lblAngle" class="text-indigo-400 font-mono bg-indigo-950/60 border border-indigo-900 px-2 py-0.5 rounded">45°</span>
+                    </div>
+                    <input id="sliderAngle" type="range" min="15" max="85" step="5" value="45" class="w-full accent-indigo-500 bg-slate-800 h-1 rounded-lg appearance-none cursor-pointer">
+                    <div class="flex justify-between text-[9px] text-slate-500 font-bold">
+                        <span>15° (Raso)</span>
+                        <span>45° (Max Alcance)</span>
+                        <span>85° (Vertical)</span>
+                    </div>
+                </div>
+
+                <!-- Slider Velocidade Inicial -->
+                <div class="flex flex-col gap-1.5">
+                    <div class="flex justify-between items-center text-xs font-bold">
+                        <span class="text-slate-400">Velocidade Inicial (v₀)</span>
+                        <span id="lblV0" class="text-indigo-400 font-mono bg-indigo-950/60 border border-indigo-900 px-2 py-0.5 rounded">20 m/s</span>
+                    </div>
+                    <input id="sliderV0" type="range" min="10" max="35" step="1" value="20" class="w-full accent-indigo-500 bg-slate-800 h-1 rounded-lg appearance-none cursor-pointer">
+                </div>
+
+                <!-- Slider Gravidade -->
+                <div class="flex flex-col gap-1.5">
+                    <div class="flex justify-between items-center text-xs font-bold">
+                        <span class="text-slate-400">Aceleração da Gravidade (g)</span>
+                        <span id="lblG" class="text-indigo-400 font-mono bg-indigo-950/60 border border-indigo-900 px-2 py-0.5 rounded">9.8 m/s²</span>
+                    </div>
+                    <input id="sliderG" type="range" min="3" max="20" step="0.1" value="9.8" class="w-full accent-indigo-500 bg-slate-800 h-1 rounded-lg appearance-none cursor-pointer">
+                    <div class="flex justify-between text-[9px] text-slate-500 font-bold">
+                        <span>3.7 (Marte)</span>
+                        <span>9.8 (Terra)</span>
+                        <span>20.0 (Extrema)</span>
+                    </div>
+                </div>
+
+                <!-- Velocidade do Tempo / Slow Motion -->
+                <div class="flex flex-col gap-1.5">
+                    <div class="flex justify-between items-center text-xs font-bold">
+                        <span class="text-slate-400">Velocidade de Reprodução</span>
+                        <span id="lblTimeSpeed" class="text-indigo-400 font-mono bg-indigo-950/60 border border-indigo-900 px-2 py-0.5 rounded">0.5x</span>
+                    </div>
+                    <input id="sliderTimeSpeed" type="range" min="0.1" max="1.5" step="0.1" value="0.5" class="w-full accent-indigo-500 bg-slate-800 h-1 rounded-lg appearance-none cursor-pointer">
+                </div>
+
+                <!-- Configurações de exibição -->
+                <div class="border-t border-slate-800/80 pt-4 flex flex-col gap-3">
+                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Configurações de Tela</span>
+                    
+                    <label class="flex items-center gap-3 cursor-pointer select-none">
+                        <input id="chkVectors" type="checkbox" checked class="w-4 h-4 rounded border-slate-800 bg-slate-900 text-indigo-600 focus:ring-indigo-600 focus:ring-offset-slate-950">
+                        <span class="text-xs font-bold text-slate-300">Mostrar Vetores de Velocidade</span>
+                    </label>
+
+                    <label class="flex items-center gap-3 cursor-pointer select-none">
+                        <input id="chkShadows" type="checkbox" checked class="w-4 h-4 rounded border-slate-800 bg-slate-900 text-indigo-600 focus:ring-indigo-600 focus:ring-offset-slate-950">
+                        <span class="text-xs font-bold text-slate-300">Projetar Sombras nos Eixos (MU/MUV)</span>
+                    </label>
+
+                    <label class="flex items-center gap-3 cursor-pointer select-none">
+                        <input id="chkTrajectory" type="checkbox" checked class="w-4 h-4 rounded border-slate-800 bg-slate-900 text-indigo-600 focus:ring-indigo-600 focus:ring-offset-slate-950">
+                        <span class="text-xs font-bold text-slate-300">Desenhar Trajetória Parabólica</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Painel de Resultados Teóricos -->
+            <div class="bg-gradient-to-br from-slate-950 to-indigo-950/80 rounded-2xl shadow-2xl p-6 border border-indigo-950 text-slate-100 flex flex-col gap-4">
+                <h3 class="text-base font-extrabold text-amber-400 border-b border-indigo-900 pb-2.5 flex items-center gap-2">
+                    <i class="fa-solid fa-calculator"></i> Valores Teóricos Calculados
+                </h3>
+
+                <div class="grid grid-cols-2 gap-3.5">
+                    <div class="bg-slate-900/60 p-3 rounded-xl border border-indigo-950">
+                        <span class="text-[10px] text-slate-400 block uppercase font-bold tracking-wider">V₀ₓ (Constante)</span>
+                        <span id="valV0x" class="text-base font-mono font-bold text-white">0.0 m/s</span>
+                        <span class="text-[9px] text-indigo-400/80 block mt-1">$v_{0x} = v_0 \cdot \cos(\theta)$</span>
+                    </div>
+
+                    <div class="bg-slate-900/60 p-3 rounded-xl border border-indigo-950">
+                        <span class="text-[10px] text-slate-400 block uppercase font-bold tracking-wider">V₀y (Inicial)</span>
+                        <span id="valV0y" class="text-base font-mono font-bold text-white">0.0 m/s</span>
+                        <span class="text-[9px] text-indigo-400/80 block mt-1">$v_{0y} = v_0 \cdot \sin(\theta)$</span>
+                    </div>
+
+                    <div class="bg-slate-900/60 p-3 rounded-xl border border-indigo-950 col-span-2">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <span class="text-[10px] text-slate-400 block uppercase font-bold tracking-wider">Altura Máxima (H_max)</span>
+                                <span id="valMaxY" class="text-lg font-mono font-bold text-emerald-400">0.0 m</span>
+                            </div>
+                            <span class="text-[9px] text-indigo-400/80 text-right font-mono">$H = \frac{v_{0y}^2}{2g}$</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900/60 p-3 rounded-xl border border-indigo-950 col-span-2">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <span class="text-[10px] text-slate-400 block uppercase font-bold tracking-wider">Alcance Máximo (A)</span>
+                                <span id="valMaxX" class="text-lg font-mono font-bold text-sky-400">0.0 m</span>
+                            </div>
+                            <span class="text-[9px] text-indigo-400/80 text-right font-mono">$A = \frac{v_0^2 \sin(2\theta)}{g}$</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900/60 p-3 rounded-xl border border-indigo-950 col-span-2">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <span class="text-[10px] text-slate-400 block uppercase font-bold tracking-wider">Tempo de Voo Total</span>
+                                <span id="valTotalTime" class="text-base font-mono font-bold text-amber-400">0.00 s</span>
+                            </div>
+                            <span class="text-[9px] text-indigo-400/80 text-right font-mono">$t_{total} = \frac{2v_{0y}}{g}$</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Rodapé Pedagógico -->
+    <footer class="bg-slate-950 border-t border-slate-800/80 py-8 px-6 text-slate-400 mt-6">
+        <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
+            <div>
+                <h4 class="font-extrabold text-slate-200 text-base mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-graduation-cap text-indigo-400"></i> Atividades Sugeridas para a Aula:
+                </h4>
+                <ul class="space-y-3 font-medium">
+                    <li class="flex gap-2.5">
+                        <i class="fa-solid fa-angle-right text-indigo-500 mt-1"></i>
+                        <span><strong>Mude o ângulo para 45°:</strong> Desafie os alunos a verificar se esse ângulo realmente oferece o maior alcance horizontal na simulação.</span>
+                    </li>
+                    <li class="flex gap-2.5">
+                        <i class="fa-solid fa-angle-right text-indigo-500 mt-1"></i>
+                        <span><strong>Verifique o topo da curva (Vy = 0):</strong> Pause o simulador no tempo correspondente à metade do tempo total de voo. Pergunte: "Se a velocidade vertical se anula no pico, a velocidade total do corpo é zero?". Use os vetores na tela para ilustrar.</span>
+                    </li>
+                    <li class="flex gap-2.5">
+                        <i class="fa-solid fa-angle-right text-indigo-500 mt-1"></i>
+                        <span><strong>Analise os gráficos:</strong> Use o seletor para transitar entre os gráficos de posição e de velocidade. Mostre que a reta de $V_x$ é perfeitamente plana (Movimento Uniforme), enquanto a reta de $V_y$ é inclinada (MUV).</span>
+                    </li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-extrabold text-slate-200 text-base mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-lightbulb text-amber-400"></i> Princípio da Independência de Galileu:
+                </h4>
+                <p class="leading-relaxed text-slate-400 text-xs md:text-sm">
+                    Galileu Galilei provou que um movimento composto pode ser decomposto em movimentos independentes que ocorrem ao mesmo tempo sem se interferirem mutuamente. 
+                    No vácuo, a força da gravidade atua unicamente na componente vertical do objeto. Portanto, horizontalmente a velocidade permanece intacta (MU), enquanto verticalmente ela varia sob ação da aceleração gravitacional (MUV).
+                </p>
+                <div class="mt-4 p-3 bg-slate-900 border border-slate-800 rounded-xl text-indigo-300 font-semibold text-xs leading-relaxed">
+                    "A velocidade vetorial instantânea do projétil é dada a cada instante por: $\vec{v} = \vec{v}_x + \vec{v}_y$."
+                </div>
+            </div>
+        </div>
+        <div class="max-w-7xl mx-auto mt-8 pt-4 border-t border-slate-900 text-center text-xs text-slate-500 font-semibold uppercase tracking-wider">
+            Desenvolvido para as aulas de Física do ProfGiovanelli • 2026
+        </div>
+    </footer>
+
+    <!-- Script MathJax para renderização de equações em LaTeX -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Script de Simulação Física e Renderização de Gráficos -->
+    <script>
+        const simCanvas = document.getElementById('simulationCanvas');
+        const ctxSim = simCanvas.getContext('2d');
+        const graphCanvas = document.getElementById('graphCanvas');
+        const ctxGraph = graphCanvas.getContext('2d');
+
+        // Elementos de Entrada
+        const sliderAngle = document.getElementById('sliderAngle');
+        const lblAngle = document.getElementById('lblAngle');
+        const sliderV0 = document.getElementById('sliderV0');
+        const lblV0 = document.getElementById('lblV0');
+        const sliderG = document.getElementById('sliderG');
+        const lblG = document.getElementById('lblG');
+        const sliderTimeSpeed = document.getElementById('sliderTimeSpeed');
+        const lblTimeSpeed = document.getElementById('lblTimeSpeed');
+
+        // Exibição e Toggles
+        const chkVectors = document.getElementById('chkVectors');
+        const chkShadows = document.getElementById('chkShadows');
+        const chkTrajectory = document.getElementById('chkTrajectory');
+
+        // Botões e Linha do tempo
+        const btnPlay = document.getElementById('btnPlay');
+        const btnPause = document.getElementById('btnPause');
+        const btnReset = document.getElementById('btnReset');
+        const btnStepBack = document.getElementById('btnStepBack');
+        const btnStepForward = document.getElementById('btnStepForward');
+        const timeScroller = document.getElementById('timeScroller');
+        const lblTime = document.getElementById('lblTime');
+
+        // Seletores de Gráficos e Painel de Cálculo
+        const graphTypeSelect = document.getElementById('graphType');
+        const valV0x = document.getElementById('valV0x');
+        const valV0y = document.getElementById('valV0y');
+        const valMaxY = document.getElementById('valMaxY');
+        const valMaxX = document.getElementById('valMaxX');
+        const valTotalTime = document.getElementById('valTotalTime');
+
+        // Estado da Física
+        let angleDeg = parseFloat(sliderAngle.value);
+        let v0 = parseFloat(sliderV0.value);
+        let g = parseFloat(sliderG.value);
+        let timeSpeed = parseFloat(sliderTimeSpeed.value);
+
+        let t = 0;              // Tempo instantâneo
+        let tMax = 0;           // Tempo limite de voo
+        let isRunning = false;  // Flag de execução
+        let animationFrameId = null;
+        let lastTimestamp = 0;
+
+        // Fatores de Escala do Canvas de Simulação
+        let scaleX = 1; 
+        let scaleY = 1;
+        const originX = 70;     // Margem esquerda
+        let originY = 350;      // Margem inferior para o chão físico
+
+        // Recálculo da Física e das Fórmulas de Lançamento
+        function recalculatePhysics() {
+            angleDeg = parseFloat(sliderAngle.value);
+            v0 = parseFloat(sliderV0.value);
+            g = parseFloat(sliderG.value);
+            timeSpeed = parseFloat(sliderTimeSpeed.value);
+
+            lblAngle.innerText = `${angleDeg}°`;
+            lblV0.innerText = `${v0} m/s`;
+            lblG.innerText = `${g.toFixed(1)} m/s²`;
+            lblTimeSpeed.innerText = `${timeSpeed.toFixed(1)}x`;
+
+            const angleRad = (angleDeg * Math.PI) / 180;
+            const v0x = v0 * Math.cos(angleRad);
+            const v0y = v0 * Math.sin(angleRad);
+
+            // Tempo total de voo (t = 2*V0y/g)
+            tMax = (2 * v0y) / g;
+
+            // Altura Máxima (H = V0y^2 / 2g)
+            const hMax = (v0y * v0y) / (2 * g);
+
+            // Alcance Horizontal Máximo (A = V0^2 * sin(2*theta) / g)
+            const alcMax = (v0 * v0 * Math.sin(2 * angleRad)) / g;
+
+            // Atualização de dados da interface
+            valV0x.innerText = `${v0x.toFixed(1)} m/s`;
+            valV0y.innerText = `${v0y.toFixed(1)} m/s`;
+            valMaxY.innerText = `${hMax.toFixed(2)} m`;
+            valMaxX.innerText = `${alcMax.toFixed(2)} m`;
+            valTotalTime.innerText = `${tMax.toFixed(2)} s`;
+
+            updateScrollerRange();
+        }
+
+        function updateScrollerRange() {
+            const pct = (t / tMax) * 100;
+            timeScroller.value = Math.min(100, Math.max(0, pct));
+            lblTime.innerText = `${t.toFixed(2)}s`;
+        }
+
+        // Redimensionar Canvas de acordo com telas/DPis
+        function resizeCanvases() {
+            const dpr = window.devicePixelRatio || 1;
+            
+            // Simulação
+            const simRect = simCanvas.parentElement.getBoundingClientRect();
+            simCanvas.width = simRect.width * dpr;
+            simCanvas.height = simRect.height * dpr;
+            ctxSim.scale(dpr, dpr);
+
+            // Gráficos
+            const graphRect = graphCanvas.parentElement.getBoundingClientRect();
+            graphCanvas.width = graphRect.width * dpr;
+            graphCanvas.height = graphRect.height * dpr;
+            ctxGraph.scale(dpr, dpr);
+
+            originY = simRect.height - 50;
+
+            // Calcular a melhor escala para caber o voo total na tela
+            const angleRad = (angleDeg * Math.PI) / 180;
+            const alcMax = (v0 * v0 * Math.sin(2 * angleRad)) / g;
+            const hMax = Math.pow(v0 * Math.sin(angleRad), 2) / (2 * g);
+
+            // Margens de folga no topo e na direita
+            scaleX = (simRect.width - originX - 60) / Math.max(alcMax, 1);
+            scaleY = (originY - 50) / Math.max(hMax, 1);
+
+            // Manter uma escala isotrópica (proporcional de 1:1) para que os ângulos geométricos na tela sejam reais
+            const uniformScale = Math.min(scaleX, scaleY);
+            scaleX = uniformScale;
+            scaleY = uniformScale;
+
+            drawAll();
+        }
+
+        // Equações Horárias de Posição
+        function getPosition(time) {
+            const angleRad = (angleDeg * Math.PI) / 180;
+            const v0x = v0 * Math.cos(angleRad);
+            const v0y = v0 * Math.sin(angleRad);
+
+            const x = v0x * time;
+            const y = v0y * time - 0.5 * g * time * time;
+
+            return { x, y: Math.max(0, y) };
+        }
+
+        // Equações Horárias de Velocidade
+        function getVelocity(time) {
+            const angleRad = (angleDeg * Math.PI) / 180;
+            const v0x = v0 * Math.cos(angleRad);
+            const v0y = v0 * Math.sin(angleRad);
+
+            const vx = v0x;
+            const vy = v0y - g * time;
+
+            return { vx, vy, v: Math.sqrt(vx * vx + vy * vy) };
+        }
+
+        // Renderização Completa do Simulador
+        function drawAll() {
+            ctxSim.clearRect(0, 0, simCanvas.width, simCanvas.height);
+
+            const width = simCanvas.width / (window.devicePixelRatio || 1);
+            const height = simCanvas.height / (window.devicePixelRatio || 1);
+
+            // 1. Marca d'água ProfGiovanelli (Design Clean)
+            ctxSim.fillStyle = 'rgba(255, 255, 255, 0.04)';
+            ctxSim.font = 'bold 28px sans-serif';
+            ctxSim.fillText("ProfGiovanelli", width - 230, 45);
+
+            // 2. Grade de Coordenadas de Referência Física
+            ctxSim.strokeStyle = '#1e293b'; // Slate 800
+            ctxSim.lineWidth = 0.5;
+            
+            // Linhas horizontais (espaçamento de 50px de simulação)
+            for (let h = originY; h > 0; h -= 40) {
+                ctxSim.beginPath();
+                ctxSim.moveTo(0, h);
+                ctxSim.lineTo(width, h);
+                ctxSim.stroke();
+            }
+            // Linhas verticais
+            for (let w = originX; w < width; w += 40) {
+                ctxSim.beginPath();
+                ctxSim.moveTo(w, 0);
+                ctxSim.lineTo(w, height);
+                ctxSim.stroke();
+            }
+
+            // 3. Eixos para as Sombras (Eixo X e Y destacado)
+            if (chkShadows.checked) {
+                // Eixo X - Azul para MU
+                ctxSim.strokeStyle = '#2563eb';
+                ctxSim.lineWidth = 3;
+                ctxSim.beginPath();
+                ctxSim.moveTo(originX, originY + 20);
+                ctxSim.lineTo(width - 30, originY + 20);
+                ctxSim.stroke();
+
+                // Eixo Y - Vermelho para MUV
+                ctxSim.strokeStyle = '#dc2626';
+                ctxSim.lineWidth = 3;
+                ctxSim.beginPath();
+                ctxSim.moveTo(originX - 20, 20);
+                ctxSim.lineTo(originX - 20, originY);
+                ctxSim.stroke();
+            }
+
+            // 4. Desenha Chão da Simulação
+            ctxSim.strokeStyle = '#475569';
+            ctxSim.lineWidth = 3;
+            ctxSim.beginPath();
+            ctxSim.moveTo(0, originY);
+            ctxSim.lineTo(width, originY);
+            ctxSim.stroke();
+
+            // 5. Linha da Trajetória Parabólica
+            if (chkTrajectory.checked) {
+                ctxSim.strokeStyle = '#818cf8'; // Indigo 400
+                ctxSim.lineWidth = 1.5;
+                ctxSim.setLineDash([4, 4]);
+                ctxSim.beginPath();
+
+                for (let stepTime = 0; stepTime <= tMax; stepTime += tMax / 120) {
+                    const pos = getPosition(stepTime);
+                    const drawX = originX + pos.x * scaleX;
+                    const drawY = originY - pos.y * scaleY;
+                    if (stepTime === 0) {
+                        ctxSim.moveTo(drawX, drawY);
+                    } else {
+                        ctxSim.lineTo(drawX, drawY);
+                    }
+                }
+                ctxSim.stroke();
+                ctxSim.setLineDash([]); // Reseta linha sólida
+            }
+
+            // Obter posições correntes do tempo
+            const currentPos = getPosition(t);
+            const realX = originX + currentPos.x * scaleX;
+            const realY = originY - currentPos.y * scaleY;
+
+            // 6. Desenhar Sombras e Linhas de Ligação
+            if (chkShadows.checked) {
+                ctxSim.strokeStyle = '#334155'; // Slate 700
+                ctxSim.lineWidth = 0.8;
+                ctxSim.setLineDash([3, 3]);
+
+                // Linha de ligação horizontal (do projétil ao eixo Y)
+                ctxSim.beginPath();
+                ctxSim.moveTo(realX, realY);
+                ctxSim.lineTo(originX - 20, realY);
+                ctxSim.stroke();
+
+                // Linha de ligação vertical (do projétil ao eixo X)
+                ctxSim.beginPath();
+                ctxSim.moveTo(realX, realY);
+                ctxSim.lineTo(realX, originY + 20);
+                ctxSim.stroke();
+                ctxSim.setLineDash([]);
+
+                // Sombra X (Bola Azul - Velocidade Constante)
+                ctxSim.fillStyle = '#3b82f6';
+                ctxSim.beginPath();
+                ctxSim.arc(realX, originY + 20, 8, 0, Math.PI * 2);
+                ctxSim.fill();
+                ctxSim.strokeStyle = '#ffffff';
+                ctxSim.lineWidth = 1.5;
+                ctxSim.stroke();
+
+                ctxSim.fillStyle = '#93c5fd';
+                ctxSim.font = '9px sans-serif';
+                ctxSim.fillText("MU (Vx Constante)", realX - 40, originY + 36);
+
+                // Sombra Y (Bola Vermelha - Movimento Variado)
+                ctxSim.fillStyle = '#ef4444';
+                ctxSim.beginPath();
+                ctxSim.arc(originX - 20, realY, 8, 0, Math.PI * 2);
+                ctxSim.fill();
+                ctxSim.strokeStyle = '#ffffff';
+                ctxSim.lineWidth = 1.5;
+                ctxSim.stroke();
+
+                ctxSim.fillStyle = '#fca5a5';
+                ctxSim.font = '9px sans-serif';
+                ctxSim.fillText("MUV (Aceleração g)", originX - 55, realY - 12);
+            }
+
+            // 7. Vetores de Velocidade
+            if (chkVectors.checked) {
+                const vel = getVelocity(t);
+                const vScale = 2.5; // Escala gráfica para os vetores ficarem visíveis
+
+                // Vx (Horizontal - Azul)
+                drawArrow(ctxSim, realX, realY, realX + vel.vx * vScale, realY, '#3b82f6', 2.5);
+                ctxSim.fillStyle = '#93c5fd';
+                ctxSim.font = 'bold 10px monospace';
+                ctxSim.fillText(`Vx: ${vel.vx.toFixed(1)}m/s`, realX + (vel.vx * vScale) / 2 - 15, realY + 16);
+
+                // Vy (Vertical - Vermelho, apontando para cima ou baixo)
+                drawArrow(ctxSim, realX, realY, realX, realY - vel.vy * vScale, '#ef4444', 2.5);
+                ctxSim.fillStyle = '#fca5a5';
+                ctxSim.font = 'bold 10px monospace';
+                ctxSim.fillText(`Vy: ${vel.vy.toFixed(1)}m/s`, realX - 78, realY - (vel.vy * vScale) / 2);
+
+                // V Resultante (Verde)
+                drawArrow(ctxSim, realX, realY, realX + vel.vx * vScale, realY - vel.vy * vScale, '#10b981', 3);
+                ctxSim.fillStyle = '#6ee7b7';
+                ctxSim.font = 'bold 11px monospace';
+                ctxSim.fillText(`V: ${vel.v.toFixed(1)}m/s`, realX + (vel.vx * vScale) + 6, realY - (vel.vy * vScale) - 4);
+            }
+
+            // 8. O Projétil Real (Amarelo destacado com brilho radial)
+            ctxSim.beginPath();
+            const grad = ctxSim.createRadialGradient(realX - 3, realY - 3, 2, realX, realY, 11);
+            grad.addColorStop(0, '#fef08a');
+            grad.addColorStop(0.8, '#eab308');
+            grad.addColorStop(1, '#854d0e');
+            ctxSim.fillStyle = grad;
+            ctxSim.arc(realX, realY, 11, 0, Math.PI * 2);
+            ctxSim.fill();
+            ctxSim.strokeStyle = '#ffffff';
+            ctxSim.lineWidth = 2;
+            ctxSim.stroke();
+
+            // Informações flutuantes acima do projétil real
+            ctxSim.fillStyle = '#ffffff';
+            ctxSim.font = 'bold 9px sans-serif';
+            ctxSim.fillText(`x=${currentPos.x.toFixed(1)}m, y=${currentPos.y.toFixed(1)}m`, realX - 35, realY - 18);
+
+            // Renderizar gráficos integrados
+            drawGraphs();
+        }
+
+        // Seta com cabeça gráfica de desenho vetorial
+        function drawArrow(ctx, fromX, fromY, toX, toY, color, width) {
+            const head = 7;
+            const dx = toX - fromX;
+            const dy = toY - fromY;
+            const angle = Math.atan2(dy, dx);
+
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            ctx.lineWidth = width;
+
+            ctx.beginPath();
+            ctx.moveTo(fromX, fromY);
+            ctx.lineTo(toX, toY);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(toX, toY);
+            ctx.lineTo(toX - head * Math.cos(angle - Math.PI / 6), toY - head * Math.sin(angle - Math.PI / 6));
+            ctx.lineTo(toX - head * Math.cos(angle + Math.PI / 6), toY - head * Math.sin(angle + Math.PI / 6));
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        // Gráficos Sincronizados
+        function drawGraphs() {
+            ctxGraph.clearRect(0, 0, graphCanvas.width, graphCanvas.height);
+            const w = graphCanvas.width / (window.devicePixelRatio || 1);
+            const h = graphCanvas.height / (window.devicePixelRatio || 1);
+
+            const type = graphTypeSelect.value;
+            const padLeft = 45;
+            const padRight = 20;
+            const padTop = 25;
+            const padBottom = 30;
+
+            const gW = w - padLeft - padRight;
+            const gH = h - padTop - padBottom;
+
+            // Eixos cartesianos dos gráficos
+            ctxGraph.strokeStyle = '#334155';
+            ctxGraph.lineWidth = 1;
+            ctxGraph.beginPath();
+            ctxGraph.moveTo(padLeft, padTop);
+            ctxGraph.lineTo(padLeft, h - padBottom);
+            ctxGraph.lineTo(w - padRight, h - padBottom);
+            ctxGraph.stroke();
+
+            // Marcador de tempo do cursor atual
+            const currentRatio = t / tMax;
+            const markerX = padLeft + currentRatio * gW;
+            ctxGraph.strokeStyle = 'rgba(245, 158, 11, 0.4)';
+            ctxGraph.lineWidth = 2;
+            ctxGraph.beginPath();
+            ctxGraph.moveTo(markerX, padTop);
+            ctxGraph.lineTo(markerX, h - padBottom);
+            ctxGraph.stroke();
+
+            ctxGraph.fillStyle = '#f59e0b';
+            ctxGraph.font = '10px monospace';
+            ctxGraph.fillText(`t=${t.toFixed(2)}s`, markerX - 16, padTop - 5);
+
+            if (type === 'pos') {
+                // Gráficos de Posição
+                ctxGraph.fillStyle = '#94a3b8';
+                ctxGraph.font = '9px sans-serif';
+                ctxGraph.fillText("Posição (m)", padLeft - 40, padTop - 10);
+                ctxGraph.fillText("t (s)", w - padRight - 5, h - padBottom + 16);
+
+                const currentPos = getPosition(t);
+                const angleRad = (angleDeg * Math.PI) / 180;
+                const totalAlc = (v0 * v0 * Math.sin(2 * angleRad)) / g;
+                const totalH = Math.pow(v0 * Math.sin(angleRad), 2) / (2 * g);
+                const limitVal = Math.max(totalAlc, totalH, 1);
+
+                // Curva X(t) em Azul (MU)
+                ctxGraph.strokeStyle = '#3b82f6';
+                ctxGraph.lineWidth = 2;
+                ctxGraph.beginPath();
+                for (let i = 0; i <= 100; i++) {
+                    const stepT = (i / 100) * tMax;
+                    const pos = getPosition(stepT);
+                    const drawX = padLeft + (i / 100) * gW;
+                    const drawY = h - padBottom - (pos.x / limitVal) * gH;
+                    if (i === 0) ctxGraph.moveTo(drawX, drawY);
+                    else ctxGraph.lineTo(drawX, drawY);
+                }
+                ctxGraph.stroke();
+
+                // Curva Y(t) em Vermelho (MUV)
+                ctxGraph.strokeStyle = '#ef4444';
+                ctxGraph.lineWidth = 2;
+                ctxGraph.beginPath();
+                for (let i = 0; i <= 100; i++) {
+                    const stepT = (i / 100) * tMax;
+                    const pos = getPosition(stepT);
+                    const drawX = padLeft + (i / 100) * gW;
+                    const drawY = h - padBottom - (pos.y / limitVal) * gH;
+                    if (i === 0) ctxGraph.moveTo(drawX, drawY);
+                    else ctxGraph.lineTo(drawX, drawY);
+                }
+                ctxGraph.stroke();
+
+                // Legenda de Valores
+                ctxGraph.fillStyle = '#3b82f6';
+                ctxGraph.fillText(`x(t) [MU] = ${currentPos.x.toFixed(1)} m`, padLeft + 15, padTop + 15);
+                ctxGraph.fillStyle = '#ef4444';
+                ctxGraph.fillText(`y(t) [MUV] = ${currentPos.y.toFixed(1)} m`, padLeft + 15, padTop + 28);
+
+            } else {
+                // Gráficos de Velocidade
+                ctxGraph.fillStyle = '#94a3b8';
+                ctxGraph.font = '9px sans-serif';
+                ctxGraph.fillText("Velocidade (m/s)", padLeft - 40, padTop - 10);
+                ctxGraph.fillText("t (s)", w - padRight - 5, h - padBottom + 16);
+
+                const currentVel = getVelocity(t);
+                const angleRad = (angleDeg * Math.PI) / 180;
+                const v0x = v0 * Math.cos(angleRad);
+                const v0y = v0 * Math.sin(angleRad);
+                const maxVel = Math.max(v0, v0x, v0y, 1);
+
+                // Zero no centro vertical para permitir Vy negativo
+                const zeroY = padTop + gH / 2;
+
+                // Linha de zero tracejada
+                ctxGraph.strokeStyle = '#334155';
+                ctxGraph.setLineDash([2, 2]);
+                ctxGraph.beginPath();
+                ctxGraph.moveTo(padLeft, zeroY);
+                ctxGraph.lineTo(w - padRight, zeroY);
+                ctxGraph.stroke();
+                ctxGraph.setLineDash([]);
+
+                // Curva Vx(t) - Azul (Reta Plana)
+                ctxGraph.strokeStyle = '#3b82f6';
+                ctxGraph.lineWidth = 2;
+                ctxGraph.beginPath();
+                for (let i = 0; i <= 100; i++) {
+                    const stepT = (i / 100) * tMax;
+                    const vel = getVelocity(stepT);
+                    const drawX = padLeft + (i / 100) * gW;
+                    const drawY = zeroY - (vel.vx / maxVel) * (gH / 2);
+                    if (i === 0) ctxGraph.moveTo(drawX, drawY);
+                    else ctxGraph.lineTo(drawX, drawY);
+                }
+                ctxGraph.stroke();
+
+                // Curva Vy(t) - Vermelho (Reta Linear Inclinada)
+                ctxGraph.strokeStyle = '#ef4444';
+                ctxGraph.lineWidth = 2;
+                ctxGraph.beginPath();
+                for (let i = 0; i <= 100; i++) {
+                    const stepT = (i / 100) * tMax;
+                    const vel = getVelocity(stepT);
+                    const drawX = padLeft + (i / 100) * gW;
+                    const drawY = zeroY - (vel.vy / maxVel) * (gH / 2);
+                    if (i === 0) ctxGraph.moveTo(drawX, drawY);
+                    else ctxGraph.lineTo(drawX, drawY);
+                }
+                ctxGraph.stroke();
+
+                // Legenda de Velocidades
+                ctxGraph.fillStyle = '#3b82f6';
+                ctxGraph.fillText(`Vx = ${currentVel.vx.toFixed(1)} m/s (Constante)`, padLeft + 15, padTop + 15);
+                ctxGraph.fillStyle = '#ef4444';
+                ctxGraph.fillText(`Vy = ${currentVel.vy.toFixed(1)} m/s (Variável)`, padLeft + 15, padTop + 28);
+            }
+        }
+
+        // Loop principal da física
+        function updatePhysics(timestamp) {
+            if (!isRunning) return;
+
+            if (!lastTimestamp) lastTimestamp = timestamp;
+            const deltaSec = (timestamp - lastTimestamp) / 1000;
+            lastTimestamp = timestamp;
+
+            t += deltaSec * timeSpeed;
+
+            // Fim do tempo de voo
+            if (t >= tMax) {
+                t = tMax;
+                isRunning = false;
+                togglePlayPauseButtons();
+            }
+
+            updateScrollerRange();
+            drawAll();
+
+            if (isRunning) {
+                animationFrameId = requestAnimationFrame(updatePhysics);
+            }
+        }
+
+        function startSimulation() {
+            if (t >= tMax) {
+                t = 0; // Reinicia se terminou
+            }
+            isRunning = true;
+            lastTimestamp = 0;
+            togglePlayPauseButtons();
+            animationFrameId = requestAnimationFrame(updatePhysics);
+        }
+
+        function pauseSimulation() {
+            isRunning = false;
+            togglePlayPauseButtons();
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+        }
+
+        function resetSimulation() {
+            pauseSimulation();
+            t = 0;
+            updateScrollerRange();
+            drawAll();
+        }
+
+        function togglePlayPauseButtons() {
+            if (isRunning) {
+                btnPlay.classList.add('hidden');
+                btnPause.classList.remove('hidden');
+            } else {
+                btnPlay.classList.remove('hidden');
+                btnPause.classList.add('hidden');
+            }
+        }
+
+        // --- ASSOCIAÇÃO DOS ELEMENTOS AOS CONTROLES ---
+        btnPlay.addEventListener('click', startSimulation);
+        btnPause.addEventListener('click', pauseSimulation);
+        btnReset.addEventListener('click', resetSimulation);
+
+        btnStepForward.addEventListener('click', () => {
+            pauseSimulation();
+            t = Math.min(tMax, t + 0.05);
+            updateScrollerRange();
+            drawAll();
+        });
+
+        btnStepBack.addEventListener('click', () => {
+            pauseSimulation();
+            t = Math.max(0, t - 0.05);
+            updateScrollerRange();
+            drawAll();
+        });
+
+        timeScroller.addEventListener('input', (e) => {
+            pauseSimulation();
+            const pct = parseFloat(e.target.value);
+            t = (pct / 100) * tMax;
+            lblTime.innerText = `${t.toFixed(2)}s`;
+            drawAll();
+        });
+
+        sliderAngle.addEventListener('input', () => {
+            recalculatePhysics();
+            if (!isRunning) drawAll();
+        });
+
+        sliderV0.addEventListener('input', () => {
+            recalculatePhysics();
+            if (!isRunning) drawAll();
+        });
+
+        sliderG.addEventListener('input', () => {
+            recalculatePhysics();
+            if (!isRunning) drawAll();
+        });
+
+        sliderTimeSpeed.addEventListener('input', () => {
+            recalculatePhysics();
+        });
+
+        chkVectors.addEventListener('change', drawAll);
+        chkShadows.addEventListener('change', drawAll);
+        chkTrajectory.addEventListener('change', drawAll);
+        graphTypeSelect.addEventListener('change', drawGraphs);
+
+        window.addEventListener('resize', resizeCanvases);
+
+        // Inicialização Completa
+        window.onload = function() {
+            recalculatePhysics();
+            resizeCanvases();
+        };
+    </script>
+</body>
+</html>
