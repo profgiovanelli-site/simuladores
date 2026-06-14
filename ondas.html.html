@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ondas periódicas ProfGiovanelli</title>
+    <!-- Tailwind CSS para um design moderno, limpo e responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        giovanelli: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            900: '#14532d',
+                        },
+                        waveblue: {
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Ajuste fino dos seletores deslizantes e transições */
+        input[type="range"]::-webkit-slider-thumb {
+            background: #22c55e;
+            cursor: pointer;
+            border-radius: 9999px;
+            width: 16px;
+            height: 16px;
+            transition: transform 0.1s ease;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+        input[type="range"]::-moz-range-thumb {
+            background: #22c55e;
+            cursor: pointer;
+            border-radius: 9999px;
+            width: 16px;
+            height: 16px;
+            transition: transform 0.1s ease;
+        }
+        input[type="range"]::-moz-range-thumb:hover {
+            transform: scale(1.2);
+        }
+        .math-style {
+            font-family: 'Times New Roman', Times, serif;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-emerald-500 selection:text-black">
+
+    <!-- Cabeçalho Principal -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50 px-4 py-4">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="p-2.5 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl text-slate-950 shadow-lg shadow-emerald-500/20">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-black tracking-tight text-white sm:text-2xl">Ondas periódicas</h1>
+                    <p class="text-xs font-semibold text-emerald-400 tracking-wider uppercase">ProfGiovanelli</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <span class="text-xs text-slate-400">Parâmetros reais no Sistema Internacional (SI)</span>
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Conteúdo Principal -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Coluna Esquerda: Simulador Canvas & Controles (8 colunas no desktop) -->
+        <div class="lg:col-span-8 flex flex-col gap-6">
+            
+            <!-- Janela do Simulador (Canvas) -->
+            <div class="bg-slate-900 rounded-2xl border border-slate-800/80 shadow-2xl overflow-hidden flex flex-col">
+                
+                <!-- Barra de Ferramentas / Filtros Rápidos -->
+                <div class="p-4 bg-slate-900/90 border-b border-slate-800 flex flex-wrap justify-between items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        <button id="btnPlayPause" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold rounded-lg text-sm transition-all flex items-center gap-2 shadow-lg shadow-emerald-600/20 active:scale-95">
+                            <span id="playIcon">⏸ Pausar</span>
+                        </button>
+                        <button id="btnReset" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg font-medium text-sm transition-all active:scale-95">
+                            Reiniciar Valores
+                        </button>
+                    </div>
+
+                    <!-- Botões Rápidos para Ligar/Desligar Elementos Visuais -->
+                    <div class="flex flex-wrap gap-1.5 text-xs">
+                        <button id="chkCrista" class="px-2.5 py-1.5 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/30 transition-all font-semibold hover:bg-rose-500/30">
+                            🔴 Cristas
+                        </button>
+                        <button id="chkVale" class="px-2.5 py-1.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30 transition-all font-semibold hover:bg-amber-500/30">
+                            🟡 Vales
+                        </button>
+                        <button id="chkLambda" class="px-2.5 py-1.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 transition-all font-semibold hover:bg-emerald-500/30">
+                            📏 Comprimento (<span class="math-style">λ</span>)
+                        </button>
+                        <button id="chkAmp" class="px-2.5 py-1.5 rounded-md bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/30 transition-all font-semibold hover:bg-fuchsia-500/30">
+                            ↕️ Amplitude (A)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Canvas Gráfico -->
+                <div class="relative flex-grow min-h-[320px] md:min-h-[420px] bg-slate-950">
+                    <canvas id="waveCanvas" class="w-full h-full block cursor-pointer"></canvas>
+                    
+                    <!-- Linha informativa e interativa flutuante -->
+                    <div class="absolute bottom-3 right-3 bg-slate-900/90 backdrop-blur border border-slate-800 px-3 py-1.5 rounded-lg text-xs text-slate-400 pointer-events-none flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-sky-400 animate-ping"></span>
+                        Arraste ou toque na onda para ler os valores instantâneos no ponto desejado
+                    </div>
+                </div>
+
+                <!-- Painel de Valores Físicos Dinâmicos -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 border-t border-slate-800 bg-slate-900/40 divide-x divide-y sm:divide-y-0 divide-slate-800">
+                    <div class="p-4 text-center">
+                        <p class="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">Velocidade (<span class="math-style">v</span>)</p>
+                        <p id="valSpeed" class="text-xl font-bold text-rose-400 mt-0.5">--</p>
+                    </div>
+                    <div class="p-4 text-center">
+                        <p class="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">Frequência (<span class="math-style">f</span>)</p>
+                        <p id="valFreq" class="text-xl font-bold text-sky-400 mt-0.5">--</p>
+                    </div>
+                    <div class="p-4 text-center">
+                        <p class="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">Comprimento (<span class="math-style">λ</span>)</p>
+                        <p id="valLambda" class="text-xl font-bold text-emerald-400 mt-0.5">--</p>
+                    </div>
+                    <div class="p-4 text-center">
+                        <p class="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">Período (<span class="math-style">T</span>)</p>
+                        <p id="valPeriod" class="text-xl font-bold text-indigo-400 mt-0.5">--</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Painel de Sliders / Modificadores Interativos -->
+            <div class="bg-slate-900/60 rounded-2xl border border-slate-800/80 p-6 shadow-xl grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Ajuste: Velocidade de Propagação (m/s) -->
+                <div class="flex flex-col gap-2">
+                    <div class="flex justify-between items-center">
+                        <label for="sldSpeed" class="text-sm font-bold text-slate-300 flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                            Velocidade (<span class="math-style">v</span>)
+                        </label>
+                        <span id="lblSpeed" class="text-xs font-extrabold text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20">0 m/s</span>
+                    </div>
+                    <input type="range" id="sldSpeed" min="1.0" max="8.0" step="0.1" value="4.0" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-rose-500">
+                    <p class="text-[11px] text-slate-400 leading-tight">Velocidade de avanço dos pulsos periódicos pelo meio elástico.</p>
+                </div>
+
+                <!-- Ajuste: Frequência (Hz) -->
+                <div class="flex flex-col gap-2">
+                    <div class="flex justify-between items-center">
+                        <label for="sldFreq" class="text-sm font-bold text-slate-300 flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-sky-500"></span>
+                            Frequência (<span class="math-style">f</span>)
+                        </label>
+                        <span id="lblFreq" class="text-xs font-extrabold text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">0 Hz</span>
+                    </div>
+                    <input type="range" id="sldFreq" min="0.5" max="4.0" step="0.1" value="2.0" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-sky-500">
+                    <p class="text-[11px] text-slate-400 leading-tight">Número de ciclos/oscilações completas geradas pela fonte por segundo.</p>
+                </div>
+
+                <!-- Ajuste: Amplitude (m) -->
+                <div class="flex flex-col gap-2">
+                    <div class="flex justify-between items-center">
+                        <label for="sldAmplitude" class="text-sm font-bold text-slate-300 flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-fuchsia-500"></span>
+                            Amplitude (<span class="math-style">A</span>)
+                        </label>
+                        <span id="lblAmplitude" class="text-xs font-extrabold text-fuchsia-400 bg-fuchsia-500/10 px-2 py-0.5 rounded border border-fuchsia-500/20 font-mono">0.00 m</span>
+                    </div>
+                    <input type="range" id="sldAmplitude" min="0.2" max="1.5" step="0.05" value="0.8" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-fuchsia-500">
+                    <p class="text-[11px] text-slate-400 leading-tight">Afastamento máximo da onda em relação ao ponto de equilíbrio central.</p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Coluna Direita: Painel Anatômico de Explicação de Elementos (4 colunas no desktop) -->
+        <div class="lg:col-span-4 flex flex-col gap-6">
+            
+            <div class="bg-slate-900 rounded-2xl border border-slate-800/80 p-6 flex flex-col gap-4 shadow-xl">
+                <div>
+                    <h2 class="text-lg font-black text-white flex items-center gap-2">
+                        <span class="text-emerald-500">📐</span> Anatomia de uma Onda
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+                        Clique em cada cartão para <strong>isolar ou destacar</strong> de forma visual o elemento na simulação em tempo real.
+                    </p>
+                </div>
+
+                <!-- Cartões de Elementos Interativos -->
+                <div class="space-y-2.5">
+                    
+                    <!-- Botão de Ver Tudo / Resetar Destaque -->
+                    <button id="btnShowAll" class="w-full text-left p-3 rounded-xl border border-slate-800 bg-slate-950 hover:bg-slate-900 text-xs font-bold text-slate-300 flex justify-between items-center transition-all">
+                        <span>👁️ Mostrar Todos Simultaneamente</span>
+                        <span class="text-[10px] uppercase bg-slate-800 px-1.5 py-0.5 rounded text-slate-400 font-bold">Padrão</span>
+                    </button>
+
+                    <!-- Cristas -->
+                    <div id="cardCrista" class="group border border-slate-800/60 bg-slate-950 rounded-xl p-3.5 cursor-pointer hover:border-rose-500/50 transition-all" onclick="setHighlight('crista')">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-sm text-rose-400 flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                                Crista da Onda
+                            </span>
+                            <span class="text-[10px] text-slate-500 group-hover:text-rose-400 transition-colors font-medium">Ver Destaque →</span>
+                        </div>
+                        <p class="text-slate-400 text-xs mt-1.5 leading-relaxed">
+                            Pontos mais altos atingidos pela perturbação periódica. Representam os valores de pico positivo no eixo geométrico vertical.
+                        </p>
+                    </div>
+
+                    <!-- Vales -->
+                    <div id="cardVale" class="group border border-slate-800/60 bg-slate-950 rounded-xl p-3.5 cursor-pointer hover:border-amber-500/50 transition-all" onclick="setHighlight('vale')">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-sm text-amber-300 flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                                Vale da Onda
+                            </span>
+                            <span class="text-[10px] text-slate-500 group-hover:text-amber-400 transition-colors font-medium">Ver Destaque →</span>
+                        </div>
+                        <p class="text-slate-400 text-xs mt-1.5 leading-relaxed">
+                            Pontos mais baixos alcançados pela onda, correspondendo de forma simétrica aos picos negativos da oscilação.
+                        </p>
+                    </div>
+
+                    <!-- Amplitude -->
+                    <div id="cardAmplitude" class="group border border-slate-800/60 bg-slate-950 rounded-xl p-3.5 cursor-pointer hover:border-fuchsia-500/50 transition-all" onclick="setHighlight('amplitude')">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-sm text-fuchsia-300 flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-fuchsia-500"></span>
+                                Amplitude (A)
+                            </span>
+                            <span class="text-[10px] text-slate-500 group-hover:text-fuchsia-400 transition-colors font-medium">Ver Destaque →</span>
+                        </div>
+                        <p class="text-slate-400 text-xs mt-1.5 leading-relaxed">
+                            A distância vertical que vai do eixo central (equilíbrio) até uma crista ou vale. Relaciona-se com a energia transportada.
+                        </p>
+                    </div>
+
+                    <!-- Comprimento de Onda -->
+                    <div id="cardLambda" class="group border border-slate-800/60 bg-slate-950 rounded-xl p-3.5 cursor-pointer hover:border-emerald-500/50 transition-all" onclick="setHighlight('lambda')">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-sm text-emerald-300 flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                Comprimento (<span class="math-style">λ</span>)
+                            </span>
+                            <span class="text-[10px] text-slate-500 group-hover:text-emerald-400 transition-colors font-medium">Ver Destaque →</span>
+                        </div>
+                        <p class="text-slate-400 text-xs mt-1.5 leading-relaxed">
+                            A extensão de um ciclo completo da onda periódica. Corresponde à distância entre duas cristas consecutivas.
+                        </p>
+                    </div>
+
+                    <!-- Linha de Equilíbrio -->
+                    <div id="cardEquilibrio" class="group border border-slate-800/60 bg-slate-950 rounded-xl p-3.5 cursor-pointer hover:border-sky-500/50 transition-all" onclick="setHighlight('equilibrio')">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-sm text-sky-400 flex items-center gap-1.5">
+                                <span class="w-2.5 h-1 border-t-2 border-dashed border-sky-400"></span>
+                                Linha de Equilíbrio
+                            </span>
+                            <span class="text-[10px] text-slate-500 group-hover:text-sky-400 transition-colors font-medium">Ver Destaque →</span>
+                        </div>
+                        <p class="text-slate-400 text-xs mt-1.5 leading-relaxed">
+                            A posição onde o meio de propagação estaria completamente estático, servindo como o nível de referência nulo (zero).
+                        </p>
+                    </div>
+
+                </div>
+
+                <!-- Formulário da Equação de Onda -->
+                <div class="mt-2 p-4 bg-slate-950 rounded-xl border border-slate-800/80 text-center">
+                    <p class="text-[11px] text-slate-500 uppercase tracking-wider font-bold">Equação Fundamental</p>
+                    <p class="text-2xl font-bold text-emerald-400 tracking-wider mt-1.5 math-style">v = λ · f</p>
+                    <div class="text-[10px] text-slate-400 mt-2 flex flex-col gap-0.5">
+                        <p>Logo, <span class="math-style">λ = v / f</span></p>
+                        <p>E o Período é <span class="math-style">T = 1 / f</span></p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Rodapé -->
+    <footer class="border-t border-slate-900 bg-slate-950 py-6 px-4 mt-8 text-center text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+            <p>© 2026 Ondas periódicas ProfGiovanelli. Desenvolvido para fins didáticos e demonstrações físicas.</p>
+            <p class="flex items-center gap-2">
+                <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                HTML5 Canvas & Modelagem Matemática Real
+            </p>
+        </div>
+    </footer>
+
+    <!-- Lógica de Simulação JavaScript -->
+    <script>
+        // --- SELEÇÃO DE ELEMENTOS DO DOM ---
+        const canvas = document.getElementById('waveCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const btnPlayPause = document.getElementById('btnPlayPause');
+        const playIcon = document.getElementById('playIcon');
+        const btnReset = document.getElementById('btnReset');
+        const btnShowAll = document.getElementById('btnShowAll');
+
+        // Controles de Entrada (Sliders)
+        const sldSpeed = document.getElementById('sldSpeed');
+        const sldFreq = document.getElementById('sldFreq');
+        const sldAmplitude = document.getElementById('sldAmplitude');
+        
+        // Rótulos Dinâmicos dos Controles
+        const lblSpeed = document.getElementById('lblSpeed');
+        const lblFreq = document.getElementById('lblFreq');
+        const lblAmplitude = document.getElementById('lblAmplitude');
+
+        // Leituras Físicas do Painel Inferior
+        const valSpeed = document.getElementById('valSpeed');
+        const valFreq = document.getElementById('valFreq');
+        const valLambda = document.getElementById('valLambda');
+        const valPeriod = document.getElementById('valPeriod');
+
+        // Botões Rápidos Visuais superiores (Filtros rápidos)
+        const chkCrista = document.getElementById('chkCrista');
+        const chkVale = document.getElementById('chkVale');
+        const chkLambda = document.getElementById('chkLambda');
+        const chkAmp = document.getElementById('chkAmp');
+
+        // --- ESTADO FÍSICO DA SIMULAÇÃO ---
+        let isPlaying = true;
+        let timeOffset = 0; // deslocamento temporal da onda
+        let lastTime = 0;
+
+        // Fatores de escala gráfica para que a visualização seja fluida e bonita no canvas:
+        // 1 metro real de amplitude = 70 pixels no canvas
+        // 1 metro de comprimento de onda = 100 pixels no canvas
+        const AMPLITUDE_SCALE = 70;
+        const WAVELENGTH_SCALE = 100;
+
+        // Propriedades físicas reais iniciadas no slider
+        let physicalConfig = {
+            speed: parseFloat(sldSpeed.value),        // m/s
+            frequency: parseFloat(sldFreq.value),      // Hz
+            amplitude: parseFloat(sldAmplitude.value)  // m
+        };
+
+        // Estado de visibilidade geral dos elementos
+        let showCristas = true;
+        let showVales = true;
+        let showLambda = true;
+        let showAmplitude = true;
+
+        // Destaque exclusivo selecionado na coluna direita (null | crista | vale | amplitude | lambda | equilibrio)
+        let highlightedElement = null;
+
+        // Posição de inspeção flutuante (coordenadas no Canvas)
+        let hoverX = -1;
+        let hoverY = -1;
+
+        // --- SISTEMA DE SELEÇÃO E DESTAQUES ---
+        window.setHighlight = function(elementName) {
+            highlightedElement = elementName;
+            updateHighlightCardStyles();
+        };
+
+        btnShowAll.addEventListener('click', () => {
+            highlightedElement = null;
+            updateHighlightCardStyles();
+        });
+
+        function updateHighlightCardStyles() {
+            const cards = {
+                'crista': document.getElementById('cardCrista'),
+                'vale': document.getElementById('cardVale'),
+                'amplitude': document.getElementById('cardAmplitude'),
+                'lambda': document.getElementById('cardLambda'),
+                'equilibrio': document.getElementById('cardEquilibrio')
+            };
+
+            // Remove classes de foco anteriores
+            Object.keys(cards).forEach(key => {
+                cards[key].className = "group border border-slate-800/60 bg-slate-950 rounded-xl p-3.5 cursor-pointer hover:border-slate-700 transition-all";
+            });
+
+            // Adiciona bordas chamativas no cartão em foco ativo
+            if (highlightedElement && cards[highlightedElement]) {
+                const colors = {
+                    'crista': 'border-rose-500 bg-rose-950/10 shadow-lg shadow-rose-500/5',
+                    'vale': 'border-amber-500 bg-amber-950/10 shadow-lg shadow-amber-500/5',
+                    'amplitude': 'border-fuchsia-500 bg-fuchsia-950/10 shadow-lg shadow-fuchsia-500/5',
+                    'lambda': 'border-emerald-500 bg-emerald-950/10 shadow-lg shadow-emerald-500/5',
+                    'equilibrio': 'border-sky-500 bg-sky-950/10 shadow-lg shadow-sky-500/5'
+                };
+                cards[highlightedElement].className = `group border-2 ${colors[highlightedElement]} rounded-xl p-3.5 cursor-pointer transition-all`;
+                btnShowAll.className = "w-full text-left p-3 rounded-xl border border-slate-800 bg-slate-950 hover:bg-slate-900 text-xs font-bold text-slate-500 flex justify-between items-center transition-all";
+            } else {
+                // Caso não haja nenhum focado, destaca o botão "Mostrar Todos"
+                btnShowAll.className = "w-full text-left p-3 rounded-xl border-2 border-emerald-500/30 bg-emerald-500/5 text-xs font-bold text-emerald-300 flex justify-between items-center transition-all";
+            }
+        }
+
+        // --- CÁLCULOS FÍSICOS DA ONDA ---
+        function updatePhysicsAndMetrics() {
+            // Atualizar valores do estado de acordo com os inputs
+            physicalConfig.speed = parseFloat(sldSpeed.value);
+            physicalConfig.frequency = parseFloat(sldFreq.value);
+            physicalConfig.amplitude = parseFloat(sldAmplitude.value);
+
+            // Relações matemáticas reais do SI:
+            // 1. Comprimento de onda (lambda) = v / f
+            const lambda = physicalConfig.speed / physicalConfig.frequency;
+            // 2. Período (T) = 1 / f
+            const period = 1 / physicalConfig.frequency;
+
+            // Atualização dos rótulos dos Sliders
+            lblSpeed.textContent = `${physicalConfig.speed.toFixed(1)} m/s`;
+            lblFreq.textContent = `${physicalConfig.frequency.toFixed(1)} Hz`;
+            lblAmplitude.textContent = `${physicalConfig.amplitude.toFixed(2)} m`;
+
+            // Atualização do painel de leitura principal
+            valSpeed.textContent = `${physicalConfig.speed.toFixed(1)} m/s`;
+            valFreq.textContent = `${physicalConfig.frequency.toFixed(1)} Hz`;
+            valLambda.textContent = `${lambda.toFixed(2)} m`;
+            valPeriod.textContent = `${period.toFixed(2)} s`;
+        }
+
+        // Event Listeners dos Sliders
+        sldSpeed.addEventListener('input', updatePhysicsAndMetrics);
+        sldFreq.addEventListener('input', updatePhysicsAndMetrics);
+        sldAmplitude.addEventListener('input', updatePhysicsAndMetrics);
+
+        // Play / Pause / Reset
+        btnPlayPause.addEventListener('click', () => {
+            isPlaying = !isPlaying;
+            playIcon.textContent = isPlaying ? "⏸ Pausar" : "▶️ Iniciar";
+        });
+
+        btnReset.addEventListener('click', () => {
+            sldSpeed.value = 4.0;
+            sldFreq.value = 2.0;
+            sldAmplitude.value = 0.8;
+
+            timeOffset = 0;
+            isPlaying = true;
+            playIcon.textContent = "⏸ Pausar";
+            highlightedElement = null;
+
+            updatePhysicsAndMetrics();
+            updateHighlightCardStyles();
+        });
+
+        // Configurações do comportamento de botões de liga/desliga rápidos superiores
+        function setupToggle(button, type, activeClass, inactiveClass) {
+            button.addEventListener('click', () => {
+                if (type === 'crista') { showCristas = !showCristas; toggleStyle(button, showCristas, activeClass, inactiveClass); }
+                else if (type === 'vale') { showVales = !showVales; toggleStyle(button, showVales, activeClass, inactiveClass); }
+                else if (type === 'lambda') { showLambda = !showLambda; toggleStyle(button, showLambda, activeClass, inactiveClass); }
+                else if (type === 'amplitude') { showAmplitude = !showAmplitude; toggleStyle(button, showAmplitude, activeClass, inactiveClass); }
+            });
+        }
+
+        function toggleStyle(btn, isActive, active, inactive) {
+            btn.className = isActive ? active : inactive;
+        }
+
+        setupToggle(chkCrista, 'crista', 
+            "px-2.5 py-1.5 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/30 transition-all font-semibold hover:bg-rose-500/30",
+            "px-2.5 py-1.5 rounded-md bg-slate-800 text-slate-500 border border-transparent transition-all hover:bg-slate-700 hover:text-slate-400"
+        );
+        setupToggle(chkVale, 'vale', 
+            "px-2.5 py-1.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30 transition-all font-semibold hover:bg-amber-500/30",
+            "px-2.5 py-1.5 rounded-md bg-slate-800 text-slate-500 border border-transparent transition-all hover:bg-slate-700 hover:text-slate-400"
+        );
+        setupToggle(chkLambda, 'lambda', 
+            "px-2.5 py-1.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 transition-all font-semibold hover:bg-emerald-500/30",
+            "px-2.5 py-1.5 rounded-md bg-slate-800 text-slate-500 border border-transparent transition-all hover:bg-slate-700 hover:text-slate-400"
+        );
+        setupToggle(chkAmp, 'amplitude', 
+            "px-2.5 py-1.5 rounded-md bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/30 transition-all font-semibold hover:bg-fuchsia-500/30",
+            "px-2.5 py-1.5 rounded-md bg-slate-800 text-slate-500 border border-transparent transition-all hover:bg-slate-700 hover:text-slate-400"
+        );
+
+        // --- SISTEMA DE CAPTURA DE LEITURA (HOVER / TOUCH) ---
+        function updateHover(clientX, clientY) {
+            const rect = canvas.getBoundingClientRect();
+            hoverX = (clientX - rect.left) * (canvas.width / rect.width);
+            hoverY = (clientY - rect.top) * (canvas.height / rect.height);
+        }
+
+        canvas.addEventListener('mousemove', (e) => {
+            updateHover(e.clientX, e.clientY);
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            hoverX = -1;
+            hoverY = -1;
+        });
+
+        canvas.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 0) {
+                updateHover(e.touches[0].clientX, e.touches[0].clientY);
+            }
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            if (e.touches.length > 0) {
+                updateHover(e.touches[0].clientX, e.touches[0].clientY);
+            }
+        });
+
+        canvas.addEventListener('touchend', () => {
+            hoverX = -1;
+            hoverY = -1;
+        });
+
+        // --- CONTROLES DE ESCALONAMENTO E REDIMENSIONAMENTO ---
+        function resizeCanvas() {
+            const parent = canvas.parentElement;
+            canvas.width = parent.clientWidth * window.devicePixelRatio;
+            canvas.height = parent.clientHeight * window.devicePixelRatio;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // --- MOTOR DE DESENHO PRINCIPAL (CANVAS) ---
+        function draw(timestamp) {
+            if (!lastTime) lastTime = timestamp;
+            const delta = (timestamp - lastTime) / 1000;
+            lastTime = timestamp;
+
+            // Calcular valores físicos e derivativos do passo
+            const lambdaSI = physicalConfig.speed / physicalConfig.frequency; // Comprimento em metros
+            
+            // Converter metros para pixels geométricos na simulação
+            const amplitudePx = physicalConfig.amplitude * AMPLITUDE_SCALE;
+            const wavelengthPx = lambdaSI * WAVELENGTH_SCALE;
+
+            // Converter a velocidade para escala gráfica de pixels por segundo para mover a onda no canvas:
+            // Deslocamento por segundo (px/s) = v (m/s) * WAVELENGTH_SCALE (para manter a proporção exata)
+            const speedPx = physicalConfig.speed * WAVELENGTH_SCALE;
+
+            if (isPlaying) {
+                timeOffset += speedPx * delta;
+            }
+
+            const width = canvas.width / window.devicePixelRatio;
+            const height = canvas.height / window.devicePixelRatio;
+            const centerY = height / 2;
+
+            ctx.clearRect(0, 0, width, height);
+
+            // 1. Renderizar Linha de Equilíbrio (Repouso)
+            const showEq = !highlightedElement || highlightedElement === 'equilibrio';
+            ctx.save();
+            ctx.strokeStyle = '#334155'; // Slate-700
+            ctx.lineWidth = 1.5;
+            if (showEq) {
+                ctx.strokeStyle = highlightedElement === 'equilibrio' ? '#38bdf8' : '#334155';
+                ctx.lineWidth = highlightedElement === 'equilibrio' ? 2.5 : 1.5;
+            }
+            ctx.setLineDash([8, 6]);
+            ctx.beginPath();
+            ctx.moveTo(0, centerY);
+            ctx.lineTo(width, centerY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Rótulo de auxílio da linha central
+            ctx.fillStyle = showEq ? (highlightedElement === 'equilibrio' ? '#38bdf8' : '#64748b') : 'rgba(100, 116, 139, 0.15)';
+            ctx.font = showEq && highlightedElement === 'equilibrio' ? 'bold 11px sans-serif' : '10px sans-serif';
+            ctx.fillText('Linha de Referência / Equilíbrio', 15, centerY - 8);
+            ctx.restore();
+
+            // 2. Traçar Corpo da Onda Senoidal
+            ctx.save();
+            ctx.beginPath();
+            // Se algum elemento estiver selecionado na direita, desbota a onda principal para realçar a marcação
+            ctx.strokeStyle = highlightedElement ? 'rgba(14, 165, 233, 0.25)' : '#0ea5e9'; 
+            ctx.lineWidth = highlightedElement ? 2.0 : 3.5;
+            ctx.lineJoin = 'round';
+
+            // Equação real: y(x, t) = A * sen(k*x - omega*t)
+            // Onde k (número de onda geométrico) = 2 * pi / wavelengthPx
+            const k = (2 * Math.PI) / wavelengthPx;
+
+            for (let x = 0; x <= width; x++) {
+                const y = centerY + amplitudePx * Math.sin(k * x - k * timeOffset);
+                if (x === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            ctx.stroke();
+            ctx.restore();
+
+            // --- DETECTAR EXTREMOS GEOMÉTRICOS (CRISTAS E VALES VISÍVEIS) ---
+            const cristas = [];
+            const vales = [];
+            
+            // Fazer a varredura para capturar todas as coordenadas x, y das cristas e vales visíveis na viewport
+            const startingPoint = (timeOffset % wavelengthPx + wavelengthPx) % wavelengthPx + wavelengthPx / 4;
+            let sweepX = startingPoint - wavelengthPx;
+
+            while (sweepX < width + wavelengthPx) {
+                if (sweepX >= 0 && sweepX <= width) {
+                    const y = centerY + amplitudePx * Math.sin(k * sweepX - k * timeOffset);
+                    if (Math.abs(y - (centerY - amplitudePx)) < 1.2) {
+                        cristas.push({ x: sweepX, y: y });
+                    }
+                    if (Math.abs(y - (centerY + amplitudePx)) < 1.2) {
+                        vales.push({ x: sweepX, y: y });
+                    }
+                }
+                sweepX += wavelengthPx / 4; // varredura fracionária para não perder nenhum ponto de inflexão
+            }
+
+            // 3. RENDERIZAR AS CRISTAS (Vermelho)
+            const isCrestActive = (showCristas && !highlightedElement) || highlightedElement === 'crista';
+            if (isCrestActive) {
+                const isFocused = highlightedElement === 'crista';
+                cristas.forEach((p, idx) => {
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, isFocused ? 9 : 6, 0, 2 * Math.PI);
+                    ctx.fillStyle = '#f43f5e'; // Rose-500
+                    ctx.fill();
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = isFocused ? 2.5 : 1.5;
+                    ctx.stroke();
+
+                    if (idx === 0 || isFocused) {
+                        ctx.fillStyle = '#f43f5e';
+                        ctx.font = 'bold 11px sans-serif';
+                        ctx.fillText('CRISTA', p.x - 22, p.y - 14);
+                    }
+                    ctx.restore();
+                });
+            }
+
+            // 4. RENDERIZAR OS VALES (Amarelo)
+            const isValeActive = (showVales && !highlightedElement) || highlightedElement === 'vale';
+            if (isValeActive) {
+                const isFocused = highlightedElement === 'vale';
+                vales.forEach((p, idx) => {
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, isFocused ? 9 : 6, 0, 2 * Math.PI);
+                    ctx.fillStyle = '#f59e0b'; // Amber-500
+                    ctx.fill();
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = isFocused ? 2.5 : 1.5;
+                    ctx.stroke();
+
+                    if (idx === 0 || isFocused) {
+                        ctx.fillStyle = '#fbbf24';
+                        ctx.font = 'bold 11px sans-serif';
+                        ctx.fillText('VALE', p.x - 15, p.y + 20);
+                    }
+                    ctx.restore();
+                });
+            }
+
+            // 5. RENDERIZAR INDICADOR DE AMPLITUDE (Vertical - Fuchsia)
+            const isAmpActive = (showAmplitude && !highlightedElement) || highlightedElement === 'amplitude';
+            if (isAmpActive) {
+                const isFocused = highlightedElement === 'amplitude';
+                ctx.save();
+                ctx.lineWidth = isFocused ? 3 : 2;
+                ctx.strokeStyle = '#d946ef'; // Fuchsia-500
+                ctx.fillStyle = '#d946ef';
+
+                // Definir ponto fixo do vetor de amplitude no início do canvas
+                const ampX = width * 0.15;
+                const ampY = centerY - amplitudePx;
+
+                // Linha de referência horizontal tracejada no topo da crista
+                ctx.beginPath();
+                ctx.setLineDash([2, 3]);
+                ctx.moveTo(ampX - 10, ampY);
+                ctx.lineTo(ampX + 40, ampY);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Vetor Vertical
+                ctx.beginPath();
+                ctx.moveTo(ampX, centerY);
+                ctx.lineTo(ampX, ampY);
+                ctx.stroke();
+
+                // Setas indicativas nas pontas do vetor
+                drawArrow(ctx, ampX, centerY, ampX, ampY, 6);
+                drawArrow(ctx, ampX, ampY, ampX, centerY, 6);
+
+                // Caixa de texto com valor SI real (metros)
+                ctx.font = isFocused ? 'bold 12px sans-serif' : '10px sans-serif';
+                ctx.fillText(`Amplitude (A) = ${physicalConfig.amplitude.toFixed(2)} m`, ampX + 12, centerY - (amplitudePx / 2) + 4);
+                ctx.restore();
+            }
+
+            // 6. RENDERIZAR INDICADOR DE COMPRIMENTO DE ONDA (Horizontal - Verde)
+            const isLambdaActive = (showLambda && !highlightedElement) || highlightedElement === 'lambda';
+            if (isLambdaActive) {
+                const isFocused = highlightedElement === 'lambda';
+
+                if (cristas.length >= 2) {
+                    const c1 = cristas[0];
+                    const c2 = cristas[1];
+                    const lineY = c1.y - 18;
+
+                    ctx.save();
+                    ctx.strokeStyle = '#10b981'; // Emerald-500
+                    ctx.fillStyle = '#10b981';
+                    ctx.lineWidth = isFocused ? 3 : 2;
+
+                    // Linha de comprimento de onda ligando as cristas
+                    ctx.beginPath();
+                    ctx.moveTo(c1.x, lineY);
+                    ctx.lineTo(c2.x, lineY);
+                    ctx.stroke();
+
+                    // Cabeça das setas nas pontas das cristas
+                    drawArrow(ctx, c1.x + 15, lineY, c1.x, lineY, 6);
+                    drawArrow(ctx, c2.x - 15, lineY, c2.x, lineY, 6);
+
+                    // Linhas auxiliares verticais indicativas
+                    ctx.beginPath();
+                    ctx.setLineDash([2, 3]);
+                    ctx.moveTo(c1.x, c1.y);
+                    ctx.lineTo(c1.x, lineY);
+                    ctx.moveTo(c2.x, c2.y);
+                    ctx.lineTo(c2.x, lineY);
+                    ctx.stroke();
+
+                    // Exibir valor físico real calibrado em metros no SI
+                    ctx.font = isFocused ? 'bold 12px sans-serif' : '10px sans-serif';
+                    ctx.fillText(`Comprimento (λ) = ${lambdaSI.toFixed(2)} m`, (c1.x + c2.x) / 2 - 75, lineY - 8);
+                    ctx.restore();
+                } else {
+                    // Fallback visual caso o comprimento seja grande demais para a tela
+                    ctx.save();
+                    ctx.fillStyle = 'rgba(16, 185, 129, 0.6)';
+                    ctx.font = '10px sans-serif';
+                    ctx.fillText('Aumente a frequência para ver a demarcação física do Comprimento de Onda (λ)', 20, 25);
+                    ctx.restore();
+                }
+            }
+
+            // --- SISTEMA HOVER INTERATIVO (INSPEÇÃO DE PONTO DA ONDA) ---
+            if (hoverX >= 0 && hoverX <= width && hoverY >= 0 && hoverY <= height) {
+                // Cálculo da ordenada Y real baseado na equação senoidal física ativa
+                const realY = centerY + amplitudePx * Math.sin(k * hoverX - k * timeOffset);
+
+                // Desenhar o ponto interceptado
+                ctx.beginPath();
+                ctx.arc(hoverX, realY, 6, 0, 2 * Math.PI);
+                ctx.fillStyle = '#0ea5e9';
+                ctx.fill();
+
+                // Linha pontilhada vertical indicativa de alinhamento
+                ctx.beginPath();
+                ctx.setLineDash([3, 3]);
+                ctx.strokeStyle = 'rgba(14, 165, 233, 0.5)';
+                ctx.moveTo(hoverX, 0);
+                ctx.lineTo(hoverX, height);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Caixa de informação flutuante (Tooltip)
+                const tWidth = 150;
+                const tHeight = 65;
+                let tX = hoverX + 15;
+                let tY = realY - tHeight - 15;
+
+                // Proteções contra transbordamento nas extremidades do Canvas
+                if (tX + tWidth > width) tX = hoverX - tWidth - 15;
+                if (tY < 0) tY = realY + 15;
+                if (tY + tHeight > height) tY = height - tHeight - 10;
+
+                ctx.save();
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.98)';
+                ctx.strokeStyle = '#0ea5e9';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.roundRect(tX, tY, tWidth, tHeight, 8);
+                ctx.fill();
+                ctx.stroke();
+
+                // Textos internos da leitura flutuante
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 10px sans-serif';
+                ctx.fillText(`Ponto Inspecionado`, tX + 8, tY + 16);
+                
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '9px sans-serif';
+                // Converte pixels geométricos do canvas de volta para metros reais
+                const realX_meters = (hoverX / WAVELENGTH_SCALE).toFixed(2);
+                const realY_meters = ((realY - centerY) / AMPLITUDE_SCALE).toFixed(2);
+
+                ctx.fillText(`Posição X: ${realX_meters} m`, tX + 8, tY + 32);
+                ctx.fillText(`Elongação Y: ${realY_meters} m`, tX + 8, tY + 45);
+                ctx.fillText(`Fase Relativa: ${(((hoverX * k - timeOffset * k) % (2 * Math.PI) + 2*Math.PI) % (2*Math.PI) * 180 / Math.PI).toFixed(0)}°`, tX + 8, tY + 58);
+                ctx.restore();
+            }
+
+            requestAnimationFrame(draw);
+        }
+
+        // Função geométrica auxiliar para desenho de setas indicadoras
+        function drawArrow(context, fromx, fromy, tox, toy, r) {
+            const x_center = tox;
+            const y_center = toy;
+            let angle = Math.atan2(toy - fromy, tox - fromx);
+
+            context.beginPath();
+            context.moveTo(x_center, y_center);
+
+            angle += (1 / 3) * (2 * Math.PI);
+            let x = r * Math.cos(angle) + x_center;
+            let y = r * Math.sin(angle) + y_center;
+            context.lineTo(x, y);
+
+            angle += (1 / 3) * (2 * Math.PI);
+            x = r * Math.cos(angle) + x_center;
+            y = r * Math.sin(angle) + y_center;
+            context.lineTo(x, y);
+
+            context.closePath();
+            context.fill();
+        }
+
+        // --- DISPARO E INICIALIZAÇÃO ---
+        updatePhysicsAndMetrics();
+        updateHighlightCardStyles();
+
+        window.onload = function() {
+            requestAnimationFrame(draw);
+        }
+    </script>
+</body>
+</html>
